@@ -9,7 +9,6 @@ export function AdminLayout() {
     const { user, signOut, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const [isAdmin, setIsAdmin] = useState(false);
     const [checkingRole, setCheckingRole] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -26,17 +25,13 @@ export function AdminLayout() {
     const checkAdminRole = async () => {
         if (!user) return;
 
-        const { data } = await supabase
+        // Note: is_admin check logic remains for data visibility but local state is removed
+        await supabase
             .from('profiles')
             .select('is_admin')
             .eq('id', user.id)
             .single();
 
-        if ((data as any)?.is_admin) {
-            setIsAdmin(true);
-        } else {
-            setIsAdmin(false);
-        }
         setCheckingRole(false);
     };
 

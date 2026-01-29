@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { Upload, X, Save, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Save, ArrowLeft } from 'lucide-react';
 
 interface Category {
     id: string;
@@ -23,11 +23,8 @@ export function ProductForm() {
         price: '',
         sale_price: '',
         stock: '',
-        category_id: '',
-        colors: [] as string[]
+        category_id: ''
     });
-
-    const [colorInput, setColorInput] = useState('');
 
     const [images, setImages] = useState<string[]>([]);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -54,8 +51,7 @@ export function ProductForm() {
                 price: data.price.toString(),
                 sale_price: data.sale_price ? data.sale_price.toString() : '',
                 stock: data.stock ? data.stock.toString() : '',
-                category_id: data.category_id || '',
-                colors: Array.isArray(data.colors) ? data.colors : []
+                category_id: data.category_id || ''
             });
             // Ensure images is an array
             if (Array.isArray(data.images)) {
@@ -107,19 +103,6 @@ export function ProductForm() {
         // CAUTION: 'imageFiles' will still be uploaded. Ideally we should fix this but keeping code stable is priority.
     };
 
-    const handleAddColor = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && colorInput.trim()) {
-            e.preventDefault();
-            if (!formData.colors.includes(colorInput.trim())) {
-                setFormData({ ...formData, colors: [...formData.colors, colorInput.trim()] });
-            }
-            setColorInput('');
-        }
-    };
-
-    const removeColor = (color: string) => {
-        setFormData({ ...formData, colors: formData.colors.filter(c => c !== color) });
-    };
 
     const uploadImages = async () => {
         const uploadedUrls: string[] = [];
@@ -179,8 +162,7 @@ export function ProductForm() {
                 sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
                 stock: parseInt(formData.stock) || 0,
                 category_id: formData.category_id || null,
-                images: finalImages,
-                colors: formData.colors
+                images: finalImages
             };
 
             const { error } = id
@@ -272,27 +254,6 @@ export function ProductForm() {
                             />
                         </div>
 
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc (Nhấn Enter để thêm)</label>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                {formData.colors.map(color => (
-                                    <span key={color} className="inline-flex items-center gap-1 bg-stone-100 px-3 py-1 rounded-full text-sm font-medium text-stone-700 border border-stone-200">
-                                        {color}
-                                        <button type="button" onClick={() => removeColor(color)} className="text-stone-400 hover:text-red-500">
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </span>
-                                ))}
-                            </div>
-                            <input
-                                type="text"
-                                value={colorInput}
-                                onChange={e => setColorInput(e.target.value)}
-                                onKeyDown={handleAddColor}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                                placeholder="Ví dụ: Đỏ, Xanh, Vàng..."
-                            />
-                        </div>
 
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>

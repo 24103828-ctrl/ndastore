@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -26,13 +27,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
     const fetchFavorites = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('favorites')
+        const { data, error } = await (supabase.from('favorites' as any) as any)
             .select('product_id')
             .eq('user_id', user?.id);
 
         if (!error && data) {
-            setFavorites(data.map(f => f.product_id));
+            setFavorites((data as any[]).map(f => f.product_id));
         }
         setLoading(false);
     };
@@ -47,8 +47,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
         if (isFav) {
             // Remove
-            const { error } = await supabase
-                .from('favorites')
+            const { error } = await (supabase.from('favorites' as any) as any)
                 .delete()
                 .eq('user_id', user.id)
                 .eq('product_id', productId);
@@ -58,8 +57,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
             }
         } else {
             // Add
-            const { error } = await supabase
-                .from('favorites')
+            const { error } = await (supabase.from('favorites' as any) as any)
                 .insert({ user_id: user.id, product_id: productId });
 
             if (!error) {

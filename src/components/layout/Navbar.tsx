@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, LogOut, Heart } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, X, Heart } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -56,7 +56,6 @@ export function Navbar() {
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-10">
                             {['Trang chủ', 'Sản phẩm', 'Về chúng tôi', 'Liên hệ'].map((item, index) => {
-                                const path = item === 'Trang chủ' ? '/' : item === 'Sản phẩm' ? '/shop' : `/${item.toLowerCase().replace(/ /g, '-')}`; // Simple mapping
                                 // Fix mapping specifically
                                 const realPath = item === 'Trang chủ' ? '/' : item === 'Sản phẩm' ? '/shop' : '/';
                                 return (

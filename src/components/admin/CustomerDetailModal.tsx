@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, User, Heart, CreditCard, MapPin, Phone, Mail, Package, TrendingUp, Clock, ShoppingBag } from 'lucide-react';
+import { X, User, Heart, CreditCard, MapPin, Phone, Mail, TrendingUp, Clock, ShoppingBag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { cn } from '../../lib/utils';
 
 interface CustomerDetailModalProps {
     isOpen: boolean;

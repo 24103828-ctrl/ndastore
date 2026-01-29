@@ -17,7 +17,6 @@ interface Product {
     price: number;
     sale_price: number | null;
     images: string[] | null;
-    colors: string[] | null;
     category: { id: string; name: string } | null;
     category_id: string;
 }
@@ -34,7 +33,6 @@ export function ProductDetail() {
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string>('');
-    const [selectedColor, setSelectedColor] = useState<string>('');
     const [quantity, setQuantity] = useState(1);
     const [isHovering, setIsHovering] = useState(false);
 
@@ -53,7 +51,7 @@ export function ProductDetail() {
             if (currentProductId.current && user) {
                 const duration = Math.floor((Date.now() - viewStartTime.current) / 1000);
                 if (duration > 0) {
-                    (supabase.from('product_views') as any).insert({
+                    (supabase.from('product_views' as any) as any).insert({
                         user_id: user.id,
                         product_id: currentProductId.current,
                         duration_seconds: duration
@@ -71,7 +69,7 @@ export function ProductDetail() {
 
     // Auto-play effect
     useEffect(() => {
-        let interval: NodeJS.Timeout;
+        let interval: any;
         if (isHovering && product?.images && product.images.length > 1) {
             interval = setInterval(() => {
                 handleNextImage();
@@ -93,9 +91,6 @@ export function ProductDetail() {
         } else if (data) {
             setProduct(data as any);
             setActiveImage(data.images?.[0] || '');
-            if (data.colors && data.colors.length > 0) {
-                setSelectedColor(data.colors[0]);
-            }
             if (data.category_id) {
                 fetchRelatedProducts(data.category_id, data.id);
             }
@@ -125,8 +120,7 @@ export function ProductDetail() {
             name: product.name,
             price: (product.sale_price || product.price),
             image: product.images?.[0] || '',
-            quantity: quantity,
-            color: selectedColor || undefined
+            quantity: quantity
         });
     };
 
@@ -277,28 +271,6 @@ export function ProductDetail() {
                                         <p>{product.description || 'Chưa có mô tả cho sản phẩm này.'}</p>
                                     </div>
 
-                                    {/* Color Selection */}
-                                    {product.colors && product.colors.length > 0 && (
-                                        <div className="mb-8">
-                                            <p className="text-sm font-bold text-dark mb-3 uppercase tracking-wider">Màu sắc: <span className="text-primary">{selectedColor}</span></p>
-                                            <div className="flex flex-wrap gap-3">
-                                                {product.colors.map(color => (
-                                                    <button
-                                                        key={color}
-                                                        onClick={() => setSelectedColor(color)}
-                                                        className={cn(
-                                                            "px-4 py-2 rounded-full border-2 text-sm font-bold transition-all",
-                                                            selectedColor === color
-                                                                ? "border-primary bg-primary text-dark"
-                                                                : "border-gray-200 text-gray-600 hover:border-gray-400"
-                                                        )}
-                                                    >
-                                                        {color}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {/* Quantity & Add to Cart */}
                                     <div className="flex flex-col gap-4 mb-8">
