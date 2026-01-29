@@ -1,0 +1,86 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
+
+interface FavoritesContextType {
+    favorites: string[]; // array of product ids
+    toggleFavorite: (productId: string) => Promise<void>;
+    isFavorite: (productId: string) => boolean;
+    loading: boolean;
+}
+
+const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
+
+export function FavoritesProvider({ children }: { children: ReactNode }) {
+    const [favorites, setFavorites] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
+    const { user } = useAuth();
+
+    useEffect(() => {
+        if (user) {
+            fetchFavorites();
+        } else {
+            setFavorites([]);
+        }
+    }, [user]);
+
+    const fetchFavorites = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('favorites')
+            .select('product_id')
+            .eq('user_id', user?.id);
+
+        if (!error && data) {
+            setFavorites(data.map(f => f.product_id));
+        }
+        setLoading(false);
+    };
+
+    const toggleFavorite = async (productId: string) => {
+        if (!user) {
+            alert('Vui lòng đăng nhập để lưu sản phẩm yêu thích.');
+            return;
+        }
+
+        const isFav = favorites.includes(productId);
+
+        if (isFav) {
+            // Remove
+            const { error } = await supabase
+                .from('favorites')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('product_id', productId);
+
+            if (!error) {
+                setFavorites(prev => prev.filter(id => id !== productId));
+            }
+        } else {
+            // Add
+            const { error } = await supabase
+                .from('favorites')
+                .insert({ user_id: user.id, product_id: productId });
+
+            if (!error) {
+                setFavorites(prev => [...prev, productId]);
+            }
+        }
+    };
+
+    const isFavorite = (productId: string) => favorites.includes(productId);
+
+    return (
+        <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, loading }}>
+            {children}
+        </FavoritesContext.Provider>
+    );
+}
+
+export function useFavorites() {
+    const context = useContext(FavoritesContext);
+    if (context === undefined) {
+        throw new Error('useFavorites must be used within a FavoritesProvider');
+    }
+    return context;
+}
