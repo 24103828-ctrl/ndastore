@@ -3,6 +3,7 @@ import { ShoppingBag, CreditCard, Heart, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import { cn } from '../../lib/utils';
+import { useToast } from '../../context/ToastContext';
 
 interface ProductCardProps {
     product: {
@@ -20,6 +21,7 @@ interface ProductCardProps {
 export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
     const { addItem } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
+    const { showToast } = useToast();
     const navigate = useNavigate();
 
     const isFav = isFavorite(String(product.id));
@@ -45,6 +47,7 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
             image: displayImage,
             quantity: 1
         });
+        showToast('Đã thêm vào giỏ hàng thành công!', 'success');
     };
 
     const handleBuyNow = (e: React.MouseEvent) => {

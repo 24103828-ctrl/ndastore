@@ -8,6 +8,8 @@ import { FavoritesProvider } from './context/FavoritesContext.tsx'
 import { LanguageProvider } from './context/LanguageContext.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 
+import { ToastProvider } from './context/ToastContext.tsx'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
@@ -15,7 +17,9 @@ createRoot(document.getElementById('root')!).render(
         <LanguageProvider>
           <FavoritesProvider>
             <CartProvider>
-              <App />
+              <ToastProvider>
+                <App />
+              </ToastProvider>
             </CartProvider>
           </FavoritesProvider>
         </LanguageProvider>

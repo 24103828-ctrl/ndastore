@@ -9,6 +9,7 @@ import { ProductCard } from '../components/product/ProductCard';
 import { Star, Minus, Plus, ShoppingBag, Truck, Share2, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 
 // Types (should ideally be shared)
 interface Product {
@@ -28,6 +29,7 @@ export function ProductDetail() {
     const { toggleFavorite, isFavorite } = useFavorites();
     const { user } = useAuth();
     const { t } = useLanguage();
+    const { showToast } = useToast();
     const viewStartTime = useRef<number>(Date.now());
     const currentProductId = useRef<string | null>(null);
 
@@ -124,6 +126,7 @@ export function ProductDetail() {
             image: product.images?.[0] || '',
             quantity: quantity
         });
+        showToast('Đã thêm vào giỏ hàng thành công!', 'success');
     };
 
     const handleBuyNow = () => {

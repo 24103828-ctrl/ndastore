@@ -47,27 +47,17 @@ export function Navbar() {
             )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
-                        {/* Mobile menu button (Moved to Left) - Professional Clean Style */}
-                        <div className="md:hidden flex items-center">
-                            <button
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="text-gray-700 hover:text-primary p-2.5 rounded-lg transition-all active:scale-90 -ml-2"
-                                aria-label="Open Menu"
-                            >
-                                <Menu className="h-7 w-7" />
-                            </button>
-                        </div>
-
-                        {/* Logo (Gradient Cherry Blossom Theme) */}
+                        {/* Logo (Left on all screens) */}
                         <div className="flex-shrink-0 transform hover:scale-105 transition-transform duration-300">
                             <Link to="/" className="flex items-center gap-3">
-                                <img src={logo} alt="NDA STORE" className="h-16 w-auto object-contain" />
+                                <img src={logo} alt="NDA STORE" className="h-12 md:h-16 w-auto object-contain" />
                                 <span className="text-xl md:text-2xl font-serif font-black tracking-widest bg-gradient-to-r from-pink-500 via-rose-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
                                     NDA STORE
                                 </span>
                             </Link>
                         </div>
-                        {/* Desktop Menu */}
+
+                        {/* Desktop Menu - Hidden on Mobile */}
                         <div className="hidden md:block">
                             <div className="ml-10 flex items-baseline space-x-10">
                                 {[
@@ -84,58 +74,59 @@ export function Navbar() {
                             </div>
                         </div>
 
-                        {/* Icons */}
-                        <div className="flex items-center space-x-2 md:space-x-6">
+                        {/* Right Content: Icons & Mobile Menu Button */}
+                        <div className="flex items-center space-x-1 md:space-x-6">
+                            {/* Icons Overlay (Always Visible & Interactive) */}
+                            <div className="flex items-center space-x-0.5 md:space-x-4">
+                                <button
+                                    onClick={() => setIsSearchOpen(true)}
+                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 transform hover:rotate-12"
+                                    aria-label="Search"
+                                >
+                                    <Search className="h-6 w-6" />
+                                </button>
+
+                                <Link
+                                    to={user ? "/account" : "/login"}
+                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300"
+                                    aria-label="User Account"
+                                >
+                                    <User className="h-6 w-6" />
+                                </Link>
+
+                                <Link
+                                    to="/cart"
+                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 relative group"
+                                    aria-label="Cart"
+                                >
+                                    <ShoppingBag className="h-6 w-6 group-hover:animate-bounce-short" />
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform z-10 font-sans">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </div>
+
+                            {/* Mobile menu button (Moved to Right) */}
+                            <div className="md:hidden">
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="text-gray-700 hover:text-primary p-2 transition-all active:scale-90"
+                                    aria-label="Open Menu"
+                                >
+                                    <Menu className="h-7 w-7" />
+                                </button>
+                            </div>
+
                             {/* Language Switcher - Hidden on small mobile to save space */}
                             <button
                                 onClick={() => setLanguage(language === 'VN' ? 'EN' : 'VN')}
-                                className="hidden sm:flex items-center gap-1 text-gray-600 hover:text-primary font-bold transition-colors font-sans"
+                                className="hidden sm:flex items-center gap-1 text-gray-600 hover:text-primary font-bold transition-colors font-sans pl-2"
                             >
                                 <Globe className="h-5 w-5" />
                                 <span>{language}</span>
                             </button>
-
-                            <button
-                                onClick={() => setIsSearchOpen(true)}
-                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2.5 rounded-full transition-all duration-300 transform hover:rotate-12"
-                                aria-label="Search"
-                            >
-                                <Search className="h-6 w-6" />
-                            </button>
-
-                            <Link
-                                to={user ? "/account" : "/login"}
-                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2.5 rounded-full transition-all duration-300"
-                                aria-label="User Account"
-                            >
-                                <User className="h-6 w-6" />
-                            </Link>
-
-                            <Link
-                                to="/favorites"
-                                className="hidden sm:block text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 relative group"
-                                aria-label="Favorites"
-                            >
-                                <Heart className={cn("h-6 w-6 transition-colors", favorites.length > 0 ? "fill-primary text-primary" : "group-hover:text-primary")} />
-                                {favorites.length > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform">
-                                        {favorites.length}
-                                    </span>
-                                )}
-                            </Link>
-
-                            <Link
-                                to="/cart"
-                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2.5 rounded-full transition-all duration-300 relative group"
-                                aria-label="Cart"
-                            >
-                                <ShoppingBag className="h-6 w-6 group-hover:animate-bounce-short" />
-                                {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform z-10">
-                                        {cartCount}
-                                    </span>
-                                )}
-                            </Link>
                         </div>
                     </div>
                 </div>
