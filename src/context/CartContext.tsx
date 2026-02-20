@@ -91,14 +91,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [user, sessionId]);
 
-    // Initial Sync of existing local cart to database
+    // Initial Sync and Fetch from Database
     useEffect(() => {
+        const fetchUserCart = async () => {
+            if (!user?.id) return;
+
+            const { data: cartData, error: cartError } = await (supabase.from('cart_additions' as any) as any)
+                .select('*')
+                .eq('user_id', user.id);
+
+            if (!cartError && cartData && cartData.length > 0) {
+                const productIds = cartData.map((item: any) => item.product_id);
+
+                // Fetch product details for all IDs in the cart
+                const { data: productsData, error: productsError } = await supabase
+                    .from('products')
+                    .select('id, name, price, sale_price, images')
+                    .in('id', productIds);
+
+                if (!productsError && productsData) {
+                    const hydratedItems: CartItem[] = cartData.map((cartItem: any) => {
+                        const product = productsData.find(p => p.id === cartItem.product_id);
+                        return {
+                            id: cartItem.product_id,
+                            name: product?.name || 'Unknown Product',
+                            price: product?.sale_price || product?.price || 0,
+                            image: product?.images?.[0] || '',
+                            quantity: cartItem.quantity,
+                            color: cartItem.color
+                        };
+                    });
+
+                    // Merge strategy: Database items take precedence, but we could also merge with current local items
+                    setItems(hydratedItems);
+                }
+            }
+        };
+
+        if (user) {
+            fetchUserCart();
+        }
+
         if (items.length > 0) {
             items.forEach(item => {
                 syncItemToDb(item.id, item.color, item.quantity);
             });
         }
-    }, []); // Run once on mount
+    }, [user]); // Run when user changes
 
     const addItem = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         const qtyToAdd = newItem.quantity || 1;

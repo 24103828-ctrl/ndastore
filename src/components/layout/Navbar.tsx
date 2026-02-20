@@ -96,6 +96,19 @@ export function Navbar() {
                                 </button>
 
                                 <Link
+                                    to="/favorites"
+                                    className="hidden md:flex text-gray-600 hover:text-primary hover:bg-pink-50 p-1.5 rounded-full transition-all duration-300 relative"
+                                    aria-label="Favorites"
+                                >
+                                    <Heart className={cn("h-6 w-6", favorites.length > 0 && "fill-primary text-primary")} />
+                                    {favorites.length > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center border-2 border-white">
+                                            {favorites.length}
+                                        </span>
+                                    )}
+                                </Link>
+
+                                <Link
                                     to={user ? "/account" : "/login"}
                                     className="text-gray-600 hover:text-primary hover:bg-pink-50 p-1.5 rounded-full transition-all duration-300"
                                     aria-label="User Account"
