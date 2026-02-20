@@ -8,7 +8,7 @@
     /* Fallback color */
     background-color: #fff5f7;
     /* Image only */
-    background-image: url('./image/bg-store.jpg.png');
+    /* background-image: url('./image/bg-store.jpg.png'); */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
