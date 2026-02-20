@@ -56,26 +56,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
 
     const syncItemToDb = async (id: string, color: string | undefined, quantity: number) => {
-        const { error } = await (supabase.from('cart_additions' as any) as any).upsert({
-            session_id: sessionId,
+        const payload: any = {
             product_id: id,
             color: color || '',
+            quantity: quantity,
             user_id: user?.id || null,
-            quantity: quantity
-        }, { onConflict: 'session_id,product_id,color' });
+            session_id: sessionId
+        };
+
+        const { error } = await (supabase.from('cart_additions' as any) as any).upsert(
+            payload,
+            { onConflict: 'session_id,product_id,color' }
+        );
 
         if (error) console.error('Cart sync error:', error);
     };
 
     const removeItemFromDb = async (id: string, color: string | undefined) => {
-        const { error } = await (supabase.from('cart_additions' as any) as any)
-            .delete()
-            .match({
+        const query = (supabase.from('cart_additions' as any) as any).delete();
+
+        if (user?.id) {
+            query.eq('user_id', user.id).eq('product_id', id).eq('color', color || '');
+        } else {
+            query.match({
                 session_id: sessionId,
                 product_id: id,
                 color: color || ''
             });
+        }
 
+        const { error } = await query;
         if (error) console.error('Cart remove error:', error);
     };
 
