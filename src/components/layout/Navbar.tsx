@@ -136,8 +136,8 @@ export function Navbar() {
                 {/* Left Side Mobile Sidebar (Professional Design) */}
                 <div
                     className={cn(
-                        "fixed inset-0 z-[100] md:hidden transition-all duration-300 pointer-events-none",
-                        isMenuOpen ? "opacity-100" : "opacity-0"
+                        "fixed inset-0 z-[100] md:hidden transition-all duration-300",
+                        isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     )}
                 >
                     {/* Backdrop */}

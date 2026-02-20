@@ -108,7 +108,7 @@ export function Shop() {
                         </div>
 
                         {/* Mobile Horizontal Categories (Professional Layout) */}
-                        <div className="md:hidden flex overflow-x-auto pb-4 gap-3 no-scrollbar scroll-smooth">
+                        <div className="md:hidden w-full overflow-x-auto pb-4 gap-3 no-scrollbar scroll-smooth flex items-center">
                             <button
                                 onClick={() => setSelectedCategory('all')}
                                 className={cn(
