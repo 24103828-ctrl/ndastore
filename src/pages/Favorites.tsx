@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Layout } from '../components/layout/Layout';
 import { supabase } from '../lib/supabase';
 import { useFavorites } from '../context/FavoritesContext';
+import { useLanguage } from '../context/LanguageContext';
 import { ProductCard } from '../components/product/ProductCard';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
