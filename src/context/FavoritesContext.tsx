@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -14,69 +14,61 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-    const [favorites, setFavorites] = useState<string[]>(() => {
-        try {
-            const saved = localStorage.getItem('favorites');
-            return saved ? JSON.parse(saved) : [];
-        } catch {
-            return [];
-        }
-    });
-    const [loading, setLoading] = useState(false);
-    const { user } = useAuth();
-
-    // Persist Guest favorites to localStorage
-    useEffect(() => {
-        if (!user) {
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-        }
-    }, [favorites, user]);
+    const [favorites, setFavorites] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { user, loading: authLoading } = useAuth();
 
     const fetchFavorites = useCallback(async () => {
         if (!user) return;
 
+        console.log('Fetching favorites from Supabase...');
         setLoading(true);
         const { data, error } = await (supabase.from('favorites' as any) as any)
             .select('product_id')
             .eq('user_id', user.id);
 
         if (!error && data) {
-            setFavorites((data as any[]).map(f => f.product_id));
+            setFavorites((data as any[]).map(f => f.product_id).filter(Boolean));
+        } else if (error) {
+            console.error('Favorites fetch error:', error);
         }
         setLoading(false);
     }, [user?.id]);
 
-    // Initial load and Migration on Login
+    // Initial load logic: Strict SSOT
     useEffect(() => {
-        const handleAuthChange = async () => {
-            if (user) {
-                // Migrate guest favorites if they exist
-                const guestFavsRaw = localStorage.getItem('favorites');
-                if (guestFavsRaw) {
-                    const guestFavs: string[] = JSON.parse(guestFavsRaw);
-                    if (guestFavs.length > 0) {
-                        for (const productId of guestFavs) {
-                            await (supabase.from('favorites' as any) as any)
-                                .upsert({ user_id: user.id, product_id: productId }, { onConflict: 'user_id,product_id' });
-                        }
-                        localStorage.removeItem('favorites'); // Clear guest trace
-                    }
-                }
-                fetchFavorites();
-            } else {
-                // If logged out, load from localStorage is handled by useState init
-            }
-        };
+        if (authLoading) return;
 
-        handleAuthChange();
-    }, [user, fetchFavorites]);
+        if (user) {
+            // User: Ignore localStorage, fetch from Supabase
+            fetchFavorites();
+        } else {
+            // Guest: load from localStorage
+            try {
+                const saved = localStorage.getItem('favorites');
+                setFavorites(saved ? JSON.parse(saved) : []);
+            } catch (e) {
+                console.error('Error loading guest favorites:', e);
+                setFavorites([]);
+            }
+            setLoading(false);
+        }
+    }, [user, authLoading, fetchFavorites]);
+
+    // Persist Guest favorites to localStorage ONLY
+    useEffect(() => {
+        if (!authLoading && !user) {
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+        }
+    }, [favorites, user, authLoading]);
 
     // Real-time synchronization
     useEffect(() => {
         if (!user) return;
 
+        console.log(`Setting up Realtime favorites sync for user: ${user.id}`);
         const channel = supabase
-            .channel(`favorites_sync_${user.id}`)
+            .channel(`favorites_realtime_${user.id}`)
             .on(
                 'postgres_changes',
                 {
@@ -85,8 +77,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
                     table: 'favorites',
                     filter: `user_id=eq.${user.id}`
                 },
-                () => {
-                    fetchFavorites();
+                (payload) => {
+                    console.log('Favorites Realtime change detected:', payload.eventType);
+                    fetchFavorites(); // Derived favoritesCount will update
                 }
             )
             .subscribe();
@@ -94,11 +87,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user, fetchFavorites]);
+    }, [user?.id, fetchFavorites]);
 
     const toggleFavorite = async (productId: string) => {
+        if (!productId) return;
+
         if (user) {
             // SSOT: Update DB first
+            setLoading(true);
             const isFav = favorites.includes(productId);
             if (isFav) {
                 await (supabase.from('favorites' as any) as any)
@@ -109,19 +105,23 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
                 await (supabase.from('favorites' as any) as any)
                     .insert({ user_id: user.id, product_id: productId });
             }
-            await fetchFavorites(); // Precise sync
+            // Always fetch again to ensure precision
+            await fetchFavorites();
         } else {
             // Guest mode: update local state
-            setFavorites(prev =>
-                prev.includes(productId)
+            setFavorites(prev => {
+                const updated = prev.includes(productId)
                     ? prev.filter(id => id !== productId)
-                    : [...prev, productId]
-            );
+                    : [...prev, productId];
+                return updated;
+            });
         }
     };
 
     const isFavorite = (productId: string) => favorites.includes(productId);
-    const favoritesCount = favorites.length;
+
+    // Derived state: Derived from the synchronized 'favorites' array
+    const favoritesCount = useMemo(() => favorites.length, [favorites]);
 
     return (
         <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, loading, favoritesCount }}>

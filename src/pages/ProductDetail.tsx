@@ -25,7 +25,7 @@ interface Product {
 
 export function ProductDetail() {
     const { id } = useParams<{ id: string }>();
-    const { addItem } = useCart();
+    const { addItem, isProcessing } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
     const { user } = useAuth();
     const { t } = useLanguage();
@@ -300,10 +300,11 @@ export function ProductDetail() {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <button
                                                 onClick={handleAddToCart}
-                                                className="bg-white border-2 border-primary text-primary py-3 px-6 rounded-full font-bold hover:bg-pink-50 transition-colors flex items-center justify-center gap-2 group"
+                                                disabled={isProcessing}
+                                                className="bg-white border-2 border-primary text-primary py-3 px-6 rounded-full font-bold hover:bg-pink-50 transition-colors flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                <ShoppingBag className="w-5 h-5 group-hover:animate-bounce-short" />
-                                                {t('add_to_cart')}
+                                                <ShoppingBag className={cn("w-5 h-5", !isProcessing && "group-hover:animate-bounce-short")} />
+                                                {isProcessing ? 'Đang xử lý...' : t('add_to_cart')}
                                             </button>
                                             <div className="flex gap-4">
                                                 <button

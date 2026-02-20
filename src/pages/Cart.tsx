@@ -5,7 +5,7 @@ import { Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export function Cart() {
-    const { items, removeItem, updateQuantity, cartTotal } = useCart();
+    const { items, removeItem, updateQuantity, cartTotal, isProcessing } = useCart();
     const { t } = useLanguage();
 
     const formatPrice = (p: number) =>
@@ -56,14 +56,16 @@ export function Cart() {
                                                 <div className="flex items-center border border-gray-300 rounded-full">
                                                     <button
                                                         onClick={() => updateQuantity(item.id, item.quantity - 1, item.color)}
-                                                        className="p-2 text-gray-600 hover:text-primary transition-colors"
+                                                        disabled={isProcessing}
+                                                        className="p-2 text-gray-600 hover:text-primary transition-colors disabled:opacity-30"
                                                     >
                                                         <Minus className="w-4 h-4" />
                                                     </button>
                                                     <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
                                                     <button
                                                         onClick={() => updateQuantity(item.id, item.quantity + 1, item.color)}
-                                                        className="p-2 text-gray-600 hover:text-primary transition-colors"
+                                                        disabled={isProcessing}
+                                                        className="p-2 text-gray-600 hover:text-primary transition-colors disabled:opacity-30"
                                                     >
                                                         <Plus className="w-4 h-4" />
                                                     </button>
@@ -75,7 +77,8 @@ export function Cart() {
 
                                                 <button
                                                     onClick={() => removeItem(item.id, item.color)}
-                                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                    disabled={isProcessing}
+                                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30"
                                                     title={t('remove_item')}
                                                 >
                                                     <Trash2 className="w-5 h-5" />
