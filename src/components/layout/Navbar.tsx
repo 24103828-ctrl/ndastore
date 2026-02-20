@@ -42,21 +42,20 @@ export function Navbar() {
     return (
         <>
             <nav className={cn(
-                "sticky top-0 z-50 transition-all duration-300",
+                "sticky top-0 z-[9999] transition-all duration-300",
                 isScrolled ? "bg-white/80 backdrop-blur-md border-b border-pink-100 shadow-sm" : "bg-transparent border-b border-transparent"
             )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
-                        {/* Mobile menu button (Moved to Left) - HIGHLIGHTED FOR DEBUGGING */}
+                        {/* Mobile menu button (Moved to Left) - Professional Clean Style */}
                         <div className="md:hidden flex items-center">
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="bg-primary text-white p-3 rounded-xl shadow-lg transition-all active:scale-95 -ml-2"
+                                className="text-gray-700 hover:text-primary p-2.5 rounded-lg transition-all active:scale-90 -ml-2"
                                 aria-label="Open Menu"
                             >
                                 <Menu className="h-7 w-7" />
                             </button>
-                            <span className="ml-2 text-[10px] text-primary font-bold bg-pink-50 px-1 border border-pink-100 rounded">v2.1</span>
                         </div>
 
                         {/* Logo (Gradient Cherry Blossom Theme) */}
@@ -138,8 +137,8 @@ export function Navbar() {
                 {/* Left Side Mobile Sidebar (Professional Design) */}
                 <div
                     className={cn(
-                        "fixed inset-0 z-[100] md:hidden transition-all duration-300",
-                        isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                        "fixed inset-0 z-[10000] md:hidden transition-all duration-300",
+                        isMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-full pointer-events-none"
                     )}
                 >
                     {/* Backdrop */}

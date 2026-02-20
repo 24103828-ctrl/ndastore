@@ -42,8 +42,8 @@ export function Home() {
 
     return (
         <Layout>
-            {/* Hero Section */}
-            <section className="relative h-[400px] md:h-[600px] flex items-end justify-center pb-16 md:pb-32 bg-black/20">
+            {/* Hero Section - Optimized for Mobile */}
+            <section className="hero-section relative h-[400px] md:h-[600px] flex items-end justify-center pb-12 md:pb-32 bg-black/20 overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <img
                         src={bghoadao}
@@ -54,9 +54,9 @@ export function Home() {
                 <div className="relative z-10 text-center px-4">
                     <Link
                         to="/shop"
-                        className="inline-flex items-center bg-primary text-white px-8 py-3 rounded-full font-bold hover:bg-pink-700 transition-all transform hover:scale-105 shadow-lg"
+                        className="inline-flex items-center bg-primary text-white px-6 py-2.5 md:px-8 md:py-3 rounded-full text-sm md:text-base font-bold hover:bg-pink-700 transition-all transform hover:scale-105 shadow-lg mb-4"
                     >
-                        {t('shop_now')} <ArrowRight className="ml-2 h-5 w-5" />
+                        {t('shop_now')} <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
                     </Link>
                 </div>
             </section>
@@ -99,7 +99,7 @@ export function Home() {
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="product-grid grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
                             {featuredProducts.map((product) => (
                                 <ProductCard key={product.id} product={product} />
                             ))}

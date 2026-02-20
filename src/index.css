@@ -30,3 +30,57 @@
     scrollbar-width: none;
   }
 }
+
+/* HIGH-PRIORITY MOBILE UI OVERRIDES */
+@media (max-width: 768px) {
+
+  /* Prevent horizontal scroll */
+  html,
+  body {
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    position: relative;
+  }
+
+  /* Force Responsive Typography */
+  h1 {
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+  }
+
+  h3 {
+    font-size: 18px !important;
+  }
+
+  /* Ensure Header is always on top and clickable */
+  nav.sticky {
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Shrink Hero Elements */
+  .hero-text {
+    font-size: 28px !important;
+  }
+
+  .hero-section {
+    height: 350px !important;
+  }
+
+  /* Product Grids force 2 columns if not already */
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+/* Force pointer-events on buttons if blocked */
+button,
+a {
+  pointer-events: auto !important;
+}
