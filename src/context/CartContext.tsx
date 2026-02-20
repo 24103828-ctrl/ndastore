@@ -2,9 +2,11 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, u
 import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 interface CartItem {
     id: string; // product id
+    dbId?: string | number; // row id in database
     name: string;
     price: number;
     image: string;
@@ -33,8 +35,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const { user, loading: authLoading } = useAuth();
+    const { showToast } = useToast();
 
-    // Use ref to prevent double-initialization sync loops
     const initialFetchDone = useRef(false);
 
     const [sessionId] = useState(() => {
@@ -51,11 +53,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const fetchUserCart = useCallback(async () => {
         if (!user?.id) return;
 
+        console.log('Fetching cart from Supabase...');
         const { data: cartData, error: cartError } = await (supabase.from('cart_additions' as any) as any)
             .select('*')
             .eq('user_id', user.id);
 
-        if (!cartError && cartData) {
+        if (cartError) {
+            console.error('Cart fetch error:', cartError);
+            return;
+        }
+
+        if (cartData) {
             const validData = cartData.filter((item: any) => item.product_id);
             if (validData.length === 0) {
                 setItems([]);
@@ -74,6 +82,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     if (!product) return null;
                     return {
                         id: cartItem.product_id,
+                        dbId: cartItem.id, // Capture Database Row ID
                         name: product.name,
                         price: product.sale_price || product.price || 0,
                         image: product.images?.[0] || '',
@@ -92,11 +101,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         if (user) {
             if (!initialFetchDone.current) {
-                console.log('--- SSOT: Primary initialization from Supabase ---');
                 fetchUserCart().finally(() => { initialFetchDone.current = true; });
             }
         } else {
-            console.log('--- SSOT: Primary initialization from LocalStorage (Guest) ---');
             try {
                 const saved = localStorage.getItem('cart');
                 setItems(saved ? JSON.parse(saved) : []);
@@ -109,9 +116,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!authLoading && !user) {
             localStorage.setItem('cart', JSON.stringify(items));
-        } else if (user) {
-            // For logged in users, we NEVER persist current state to localStorage
-            // This prevents "migrating" old data back accidentally
         }
     }, [items, user, authLoading]);
 
@@ -133,17 +137,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
     };
 
-    const removeItemFromDb = async (id: string, color: string | undefined) => {
-        if (!id) return;
-        const matchCriteria: any = { product_id: id, color: color || '' };
+    const removeItemFromDb = async (id: string, color: string | undefined, dbId?: string | number) => {
+        if (!id && !dbId) return;
 
-        if (user) matchCriteria.user_id = user.id;
-        else matchCriteria.session_id = sessionId;
+        let query = (supabase.from('cart_additions' as any) as any).delete();
 
-        const { error } = await (supabase.from('cart_additions' as any) as any)
-            .delete()
-            .match(matchCriteria);
+        // Prefer explicit ID if available
+        if (dbId) {
+            query = query.eq('id', dbId);
+        } else {
+            const matchCriteria: any = { product_id: id, color: color || '' };
+            if (user) matchCriteria.user_id = user.id;
+            else matchCriteria.session_id = sessionId;
+            query = query.match(matchCriteria);
+        }
 
+        const { error } = await query;
         if (error) throw error;
     };
 
@@ -169,8 +178,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         try {
             const qtyToAdd = newItem.quantity || 1;
             if (user) {
-                // Fetch latest state briefly to avoid race condition if possible
-                // but upsert usually handles it.
                 const existingItem = items.find(item => item.id === newItem.id && item.color === newItem.color);
                 const newTotalQty = existingItem ? existingItem.quantity + qtyToAdd : qtyToAdd;
 
@@ -191,8 +198,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 });
             }
             setIsCartOpen(true);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Cart add error:', error);
+            alert(`Thêm thất bại: ${error.message || 'Lỗi kết nối'}`);
+            showToast('Lỗi khi thêm vào giỏ hàng', 'error');
         } finally {
             setIsProcessing(false);
         }
@@ -202,20 +211,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (!id || isProcessing) return;
         setIsProcessing(true);
 
+        const itemToRemove = items.find(item => item.id === id && item.color === color);
+
         try {
             if (user) {
-                await removeItemFromDb(id, color);
-                // Clear state IMMEDIATELY after successful DB removal to prevent ghosting
+                // Ensure the deletion is COMPLETED on server
+                await removeItemFromDb(id, color, itemToRemove?.dbId);
+
+                // Immediately purge ANY local cache to prevent ghosting
+                localStorage.removeItem('cart');
+
+                // Immediate local state update for zero-latency feel
                 setItems(prev => prev.filter(item => !(item.id === id && item.color === color)));
-                // Also trigger a fetch to be 100% sure sync is correct
+
+                // Final fetch to synchronize state perfectly
                 await fetchUserCart();
             } else {
                 setItems(currentItems => currentItems.filter(item => !(item.id === id && item.color === color)));
                 await removeItemFromDb(id, color);
+                localStorage.removeItem('cart');
             }
-            localStorage.removeItem('cart'); // Double safety
-        } catch (error) {
+        } catch (error: any) {
             console.error('Cart remove error:', error);
+            const errorMsg = error.message || 'Lỗi không xác định khi xóa sản phẩm';
+            alert(`Xóa thất bại: ${errorMsg}`);
+            showToast(`Lỗi: ${errorMsg}`, 'error');
         } finally {
             setIsProcessing(false);
         }
@@ -240,8 +260,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     )
                 );
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Cart update error:', error);
+            alert(`Cập nhật số lượng thất bại: ${error.message}`);
         } finally {
             setIsProcessing(false);
         }
@@ -262,8 +283,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     .eq('session_id', sessionId);
             }
             setItems([]);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Cart clear error:', error);
+            alert(`Xóa giỏ hàng thất bại: ${error.message}`);
         } finally {
             setIsProcessing(false);
         }
