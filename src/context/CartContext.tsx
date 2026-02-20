@@ -125,11 +125,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     // Merge strategy: Database items take precedence, but we could also merge with current local items
                     setItems(hydratedItems);
                 }
+            } else if (!cartError && cartData?.length === 0) {
+                setItems([]);
             }
         };
 
         if (user) {
             fetchUserCart();
+
+            // Real-time synchronization
+            const channel = supabase
+                .channel(`cart_sync_${user.id}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'cart_additions',
+                        filter: `user_id=eq.${user.id}`
+                    },
+                    () => {
+                        fetchUserCart();
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
 
         if (items.length > 0) {

@@ -66,6 +66,31 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // Real-time synchronization for Favorites
+    useEffect(() => {
+        if (!user) return;
+
+        const channel = supabase
+            .channel(`favorites_sync_${user.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'favorites',
+                    filter: `user_id=eq.${user.id}`
+                },
+                () => {
+                    fetchFavorites();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user]);
+
     const isFavorite = (productId: string) => favorites.includes(productId);
 
     return (
