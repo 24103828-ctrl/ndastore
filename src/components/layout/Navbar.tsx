@@ -47,6 +47,16 @@ export function Navbar() {
             )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
+                        {/* Mobile menu button (Moved to Left) */}
+                        <div className="md:hidden flex items-center">
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="text-gray-600 hover:text-primary p-2 transition-colors -ml-2"
+                            >
+                                <Menu className="h-6 w-6" />
+                            </button>
+                        </div>
+
                         {/* Logo (Gradient Cherry Blossom Theme) */}
                         <div className="flex-shrink-0 transform hover:scale-105 transition-transform duration-300">
                             <Link to="/" className="flex items-center gap-3">
@@ -56,7 +66,6 @@ export function Navbar() {
                                 </span>
                             </Link>
                         </div>
-
                         {/* Desktop Menu */}
                         <div className="hidden md:block">
                             <div className="ml-10 flex items-baseline space-x-10">
@@ -121,66 +130,95 @@ export function Navbar() {
                                 )}
                             </Link>
                         </div>
-
-                        {/* Mobile menu button */}
-                        <div className="md:hidden">
-                            <button
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="text-gray-600 hover:text-primary p-2 transition-colors"
-                            >
-                                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                            </button>
-                        </div>
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                    <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-pink-100 absolute w-full shadow-xl">
-                        <div className="px-4 pt-2 pb-6 space-y-2">
-                            {/* Mobile Language Switcher */}
+                {/* Left Side Mobile Sidebar (Professional Design) */}
+                <div
+                    className={cn(
+                        "fixed inset-0 z-[100] md:hidden transition-all duration-300 pointer-events-none",
+                        isMenuOpen ? "opacity-100" : "opacity-0"
+                    )}
+                >
+                    {/* Backdrop */}
+                    <div
+                        className={cn(
+                            "absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity pointer-events-auto",
+                            isMenuOpen ? "opacity-100" : "opacity-0"
+                        )}
+                        onClick={() => setIsMenuOpen(false)}
+                    />
+
+                    {/* Sidebar Content */}
+                    <div
+                        className={cn(
+                            "absolute left-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl transition-transform duration-300 flex flex-col pointer-events-auto",
+                            isMenuOpen ? "translate-x-0" : "-translate-x-full"
+                        )}
+                    >
+                        <div className="p-6 border-b border-pink-100 flex items-center justify-between bg-stone-50">
+                            <Link to="/" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                                <img src={logo} alt="NDA STORE" className="h-10 w-auto" />
+                                <span className="font-serif font-black text-primary text-sm tracking-widest">NDA STORE</span>
+                            </Link>
+                            <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-500 hover:text-primary transition-colors">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+                            {[
+                                { label: t('home'), path: '/', icon: Globe },
+                                { label: t('shop'), path: '/shop', icon: ShoppingBag },
+                                { label: t('about'), path: '/about', icon: Globe },
+                                { label: t('contact'), path: '/contact', icon: Globe },
+                                { label: t('favorites'), path: '/favorites', icon: Heart },
+                                { label: t('account'), path: '/account', icon: User },
+                            ].map((item, index) => (
+                                <Link
+                                    key={index}
+                                    to={item.path}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-4 px-4 py-3 text-gray-700 hover:text-primary hover:bg-pink-50 rounded-xl transition-all font-medium border border-transparent hover:border-pink-100"
+                                >
+                                    <item.icon className="h-5 w-5 opacity-70" />
+                                    <span>{item.label}</span>
+                                </Link>
+                            ))}
+                        </div>
+
+                        <div className="p-6 border-t border-pink-100 space-y-3 bg-stone-50">
+                            {/* Language Switcher in Sidebar */}
                             <button
-                                onClick={() => setLanguage(language === 'VN' ? 'EN' : 'VN')}
-                                className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:text-primary hover:bg-pink-50 rounded-lg transition-all font-medium"
+                                onClick={() => { setLanguage(language === 'VN' ? 'EN' : 'VN'); setIsMenuOpen(false); }}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-white border border-pink-100 rounded-xl text-gray-700 font-medium shadow-sm active:scale-95 transition-all"
                             >
-                                <Globe className="h-5 w-5" />
-                                <span>{language === 'VN' ? 'Đổi ngôn ngữ: EN' : 'Switch Language: VN'}</span>
+                                <span className="flex items-center gap-2">
+                                    <Globe className="h-5 w-5 text-primary" />
+                                    {language === 'VN' ? 'Tiếng Việt' : 'English'}
+                                </span>
+                                <span className="text-xs font-bold px-2 py-1 bg-pink-50 text-primary rounded uppercase tracking-tighter">{language}</span>
                             </button>
 
-                            {[
-                                { label: t('home'), path: '/' },
-                                { label: t('shop'), path: '/shop' },
-                                { label: t('about'), path: '/about' },
-                                { label: t('contact'), path: '/contact' },
-                                { label: t('favorites'), path: '/favorites' },
-                                { label: t('account'), path: '/account' },
-                                { label: user ? t('logout') : t('login'), path: user ? '#' : '/login', action: user ? handleSignOut : undefined }
-                            ].map((item, index) => {
-                                if (item.action) {
-                                    return (
-                                        <button
-                                            key={index}
-                                            onClick={() => { item.action && item.action(); setIsMenuOpen(false); }}
-                                            className="block w-full text-left px-4 py-3 text-gray-700 hover:text-primary hover:bg-pink-50 rounded-lg transition-all font-medium"
-                                        >
-                                            {item.label}
-                                        </button>
-                                    );
-                                }
-                                return (
-                                    <Link
-                                        key={index}
-                                        to={item.path}
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="block px-4 py-3 text-gray-700 hover:text-primary hover:bg-pink-50 rounded-lg transition-all font-medium"
-                                    >
-                                        {item.label}
-                                    </Link>
-                                );
-                            })}
+                            {user ? (
+                                <button
+                                    onClick={() => { handleSignOut(); setIsMenuOpen(false); }}
+                                    className="w-full px-4 py-3 bg-dark text-white rounded-xl font-bold active:scale-95 transition-all shadow-lg"
+                                >
+                                    {t('logout')}
+                                </button>
+                            ) : (
+                                <Link
+                                    to="/login"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="block w-full px-4 py-3 bg-dark text-white text-center rounded-xl font-bold active:scale-95 transition-all shadow-lg"
+                                >
+                                    {t('login')}
+                                </Link>
+                            )}
                         </div>
                     </div>
-                )}
+                </div>
             </nav>
             <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </>

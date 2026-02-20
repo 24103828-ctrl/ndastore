@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/product/ProductCard';
 import { Filter, Search } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { cn } from '../lib/utils';
 
 interface Product {
     id: string;
@@ -106,20 +107,49 @@ export function Shop() {
                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         </div>
 
-                        {/* Mobile Filter Toggle */}
+                        {/* Mobile Horizontal Categories (Professional Layout) */}
+                        <div className="md:hidden flex overflow-x-auto pb-4 gap-3 no-scrollbar scroll-smooth">
+                            <button
+                                onClick={() => setSelectedCategory('all')}
+                                className={cn(
+                                    "flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300",
+                                    selectedCategory === 'all'
+                                        ? "bg-primary text-white shadow-md scale-105"
+                                        : "bg-white text-gray-600 border border-pink-100"
+                                )}
+                            >
+                                {t('filter_all')}
+                            </button>
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    className={cn(
+                                        "flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300",
+                                        selectedCategory === cat.id
+                                            ? "bg-primary text-white shadow-md scale-105"
+                                            : "bg-white text-gray-600 border border-pink-100"
+                                    )}
+                                >
+                                    {cat.name}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Mobile Price Filter Toggle */}
                         <button
-                            className="md:hidden flex items-center justify-center gap-2 text-primary font-bold bg-white border-2 border-primary px-6 py-2 rounded-full w-full"
+                            className="md:hidden flex items-center justify-center gap-2 text-dark font-bold bg-secondary/50 border border-stone-200 px-6 py-2 rounded-full w-full mt-2"
                             onClick={() => setShowFilters(!showFilters)}
                         >
-                            <Filter className="h-5 w-5" /> {showFilters ? t('close') : t('filter')}
+                            <Filter className="h-5 w-5 text-primary" /> {showFilters ? t('close') : t('filter_price')}
                         </button>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-8">
                         {/* Sidebar Filters */}
-                        <div className={`md:w-64 flex-shrink-0 space-y-6 md:space-y-8 ${showFilters ? 'block bg-white p-6 rounded-xl shadow-md mb-6' : 'hidden md:block'}`}>
-                            {/* Categories */}
-                            <div>
+                        <div className={`md:w-64 flex-shrink-0 space-y-6 md:space-y-8 ${showFilters ? 'block animate-in slide-in-from-top-4 duration-300' : 'hidden md:block'}`}>
+                            {/* Desktop Categories */}
+                            <div className="hidden md:block">
                                 <h3 className="font-bold text-lg mb-4">{t('filter_category')}</h3>
                                 <ul className="space-y-2">
                                     <li>
