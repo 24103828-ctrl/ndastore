@@ -86,10 +86,10 @@ export function Navbar() {
 
                         {/* Icons */}
                         <div className="flex items-center space-x-2 md:space-x-6">
-                            {/* Language Switcher */}
+                            {/* Language Switcher - Hidden on small mobile to save space */}
                             <button
                                 onClick={() => setLanguage(language === 'VN' ? 'EN' : 'VN')}
-                                className="flex items-center gap-1 text-gray-600 hover:text-primary font-bold transition-colors font-sans"
+                                className="hidden sm:flex items-center gap-1 text-gray-600 hover:text-primary font-bold transition-colors font-sans"
                             >
                                 <Globe className="h-5 w-5" />
                                 <span>{language}</span>
@@ -97,35 +97,41 @@ export function Navbar() {
 
                             <button
                                 onClick={() => setIsSearchOpen(true)}
-                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 transform hover:rotate-12">
+                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2.5 rounded-full transition-all duration-300 transform hover:rotate-12"
+                                aria-label="Search"
+                            >
                                 <Search className="h-6 w-6" />
                             </button>
 
-                            <div className="hidden md:block">
-                                {user ? (
-                                    <Link to="/account" className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 block">
-                                        <User className="h-6 w-6" />
-                                    </Link>
-                                ) : (
-                                    <Link to="/login" className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 block">
-                                        <User className="h-6 w-6" />
-                                    </Link>
-                                )}
-                            </div>
+                            <Link
+                                to={user ? "/account" : "/login"}
+                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2.5 rounded-full transition-all duration-300"
+                                aria-label="User Account"
+                            >
+                                <User className="h-6 w-6" />
+                            </Link>
 
-                            <Link to="/favorites" className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 relative group">
+                            <Link
+                                to="/favorites"
+                                className="hidden sm:block text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 relative group"
+                                aria-label="Favorites"
+                            >
                                 <Heart className={cn("h-6 w-6 transition-colors", favorites.length > 0 ? "fill-primary text-primary" : "group-hover:text-primary")} />
                                 {favorites.length > 0 && (
-                                    <span className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform">
+                                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform">
                                         {favorites.length}
                                     </span>
                                 )}
                             </Link>
 
-                            <Link to="/cart" className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 relative group">
+                            <Link
+                                to="/cart"
+                                className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2.5 rounded-full transition-all duration-300 relative group"
+                                aria-label="Cart"
+                            >
                                 <ShoppingBag className="h-6 w-6 group-hover:animate-bounce-short" />
                                 {cartCount > 0 && (
-                                    <span className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform">
+                                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform z-10">
                                         {cartCount}
                                     </span>
                                 )}
