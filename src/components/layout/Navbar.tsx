@@ -74,13 +74,13 @@ export function Navbar() {
                             </div>
                         </div>
 
-                        {/* Right Content: Icons & Mobile Menu Button */}
-                        <div className="flex items-center space-x-1 md:space-x-6">
+                        {/* Right Content: Icons & Mobile Menu Button - Fixed Width on Mobile */}
+                        <div className="flex items-center space-x-1 md:space-x-6 w-[120px] md:w-auto justify-end overflow-visible">
                             {/* Icons Overlay (Always Visible & Interactive) */}
-                            <div className="flex items-center space-x-0.5 md:space-x-4">
+                            <div className="flex items-center space-x-0.5 md:space-x-2 overflow-visible" id="cart-badge-container">
                                 <button
                                     onClick={() => setIsSearchOpen(true)}
-                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 transform hover:rotate-12"
+                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-1.5 rounded-full transition-all duration-300 transform hover:rotate-12"
                                     aria-label="Search"
                                 >
                                     <Search className="h-6 w-6" />
@@ -88,7 +88,7 @@ export function Navbar() {
 
                                 <Link
                                     to={user ? "/account" : "/login"}
-                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300"
+                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-1.5 rounded-full transition-all duration-300"
                                     aria-label="User Account"
                                 >
                                     <User className="h-6 w-6" />
@@ -96,37 +96,38 @@ export function Navbar() {
 
                                 <Link
                                     to="/cart"
-                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-2 rounded-full transition-all duration-300 relative group"
+                                    id="cart-link"
+                                    className="text-gray-600 hover:text-primary hover:bg-pink-50 p-1.5 rounded-full transition-all duration-300 relative group overflow-visible"
                                     aria-label="Cart"
                                 >
                                     <ShoppingBag className="h-6 w-6 group-hover:animate-bounce-short" />
                                     {cartCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform z-10 font-sans">
+                                        <span
+                                            id="cart-badge"
+                                            className="absolute bg-[#D81B60] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform font-sans"
+                                            style={{
+                                                position: 'absolute',
+                                                top: '-5px',
+                                                right: '-5px',
+                                                zIndex: 10
+                                            }}
+                                        >
                                             {cartCount}
                                         </span>
                                     )}
                                 </Link>
                             </div>
 
-                            {/* Mobile menu button (Moved to Right) */}
-                            <div className="md:hidden">
+                            {/* Mobile menu button */}
+                            <div className="md:hidden ml-1">
                                 <button
                                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    className="text-gray-700 hover:text-primary p-2 transition-all active:scale-90"
+                                    className="text-gray-700 hover:text-primary p-1.5 transition-all active:scale-90"
                                     aria-label="Open Menu"
                                 >
                                     <Menu className="h-7 w-7" />
                                 </button>
                             </div>
-
-                            {/* Language Switcher - Hidden on small mobile to save space */}
-                            <button
-                                onClick={() => setLanguage(language === 'VN' ? 'EN' : 'VN')}
-                                className="hidden sm:flex items-center gap-1 text-gray-600 hover:text-primary font-bold transition-colors font-sans pl-2"
-                            >
-                                <Globe className="h-5 w-5" />
-                                <span>{language}</span>
-                            </button>
                         </div>
                     </div>
                 </div>

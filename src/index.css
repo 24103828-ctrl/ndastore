@@ -59,9 +59,29 @@
 
   /* Ensure Header is always on top and clickable */
   nav.sticky {
-    z-index: 9999 !important;
+    z-index: 999 !important;
     pointer-events: auto !important;
   }
+
+  /* FORCE HEADER LAYOUT: Logo left, Icons right, one row */
+  nav.sticky .max-w-7xl>div {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Force display for cart elements */
+  #cart-badge-container,
+  #cart-link {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
 
   /* Shrink Hero Elements */
   .hero-text {
