@@ -172,7 +172,7 @@ export function ProductDetail() {
 
     return (
         <Layout>
-            <div className="bg-stone-50 py-12">
+            <div className="bg-stone-50 py-6 md:py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                     {/* Breadcrumb */}
@@ -240,7 +240,7 @@ export function ProductDetail() {
                             </div>
 
                             {/* Product Info */}
-                            <div className="p-6 md:p-8 md:border-l border-gray-100 flex flex-col h-full">
+                            <div className="p-6 md:p-8 md:border-l border-gray-100 flex flex-col h-full bg-stone-50/30 md:bg-white">
                                 <div className="mb-auto">
                                     {product.category && (
                                         <span className="text-sm text-primary font-bold tracking-wider uppercase mb-2 block">
@@ -277,19 +277,19 @@ export function ProductDetail() {
                                     {/* Quantity & Add to Cart */}
                                     <div className="flex flex-col gap-4 mb-8">
                                         <div className="flex items-center gap-4">
-                                            <div className="flex items-center border border-gray-300 rounded-full w-max">
+                                            <div className="flex items-center border border-gray-300 rounded-full w-full md:w-max justify-between px-2">
                                                 <button
                                                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                                    className="p-3 text-gray-600 hover:text-primary transition-colors"
+                                                    className="p-4 md:p-3 text-gray-600 hover:text-primary transition-colors"
                                                 >
-                                                    <Minus className="w-4 h-4" />
+                                                    <Minus className="w-5 h-5 md:w-4 md:h-4" />
                                                 </button>
-                                                <span className="w-12 text-center font-medium">{quantity}</span>
+                                                <span className="w-12 text-center font-bold text-lg">{quantity}</span>
                                                 <button
                                                     onClick={() => setQuantity(q => q + 1)}
-                                                    className="p-3 text-gray-600 hover:text-primary transition-colors"
+                                                    className="p-4 md:p-3 text-gray-600 hover:text-primary transition-colors"
                                                 >
-                                                    <Plus className="w-4 h-4" />
+                                                    <Plus className="w-5 h-5 md:w-4 md:h-4" />
                                                 </button>
                                             </div>
                                         </div>

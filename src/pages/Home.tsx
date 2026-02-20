@@ -43,7 +43,7 @@ export function Home() {
     return (
         <Layout>
             {/* Hero Section */}
-            <section className="relative h-[600px] flex items-end justify-center pb-32 bg-black/20">
+            <section className="relative h-[400px] md:h-[600px] flex items-end justify-center pb-16 md:pb-32 bg-black/20">
                 <div className="absolute inset-0 z-0">
                     <img
                         src={bghoadao}

@@ -51,7 +51,7 @@ export function Navbar() {
                         <div className="flex-shrink-0 transform hover:scale-105 transition-transform duration-300">
                             <Link to="/" className="flex items-center gap-3">
                                 <img src={logo} alt="NDA STORE" className="h-16 w-auto object-contain" />
-                                <span className="text-2xl font-serif font-black tracking-widest bg-gradient-to-r from-pink-500 via-rose-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+                                <span className="text-xl md:text-2xl font-serif font-black tracking-widest bg-gradient-to-r from-pink-500 via-rose-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
                                     NDA STORE
                                 </span>
                             </Link>

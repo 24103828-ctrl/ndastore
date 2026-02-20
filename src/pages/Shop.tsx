@@ -91,8 +91,8 @@ export function Shop() {
             <div className="bg-stone-50 min-h-screen py-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                    <div className="flex flex-col md:flex-row mb-8 items-center justify-between gap-4">
-                        <h1 className="text-3xl font-serif font-bold text-dark">{t('shop')}</h1>
+                    <div className="flex flex-col md:flex-row mb-6 md:mb-8 items-center justify-between gap-4">
+                        <h1 className="text-2xl md:text-3xl font-serif font-bold text-dark">{t('shop')}</h1>
 
                         {/* Search Bar */}
                         <div className="relative w-full md:w-96">
@@ -108,16 +108,16 @@ export function Shop() {
 
                         {/* Mobile Filter Toggle */}
                         <button
-                            className="md:hidden flex items-center gap-2 text-dark font-medium"
+                            className="md:hidden flex items-center justify-center gap-2 text-primary font-bold bg-white border-2 border-primary px-6 py-2 rounded-full w-full"
                             onClick={() => setShowFilters(!showFilters)}
                         >
-                            <Filter className="h-5 w-5" /> {t('filter')}
+                            <Filter className="h-5 w-5" /> {showFilters ? t('close') : t('filter')}
                         </button>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-8">
                         {/* Sidebar Filters */}
-                        <div className={`md:w-64 flex-shrink-0 space-y-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
+                        <div className={`md:w-64 flex-shrink-0 space-y-6 md:space-y-8 ${showFilters ? 'block bg-white p-6 rounded-xl shadow-md mb-6' : 'hidden md:block'}`}>
                             {/* Categories */}
                             <div>
                                 <h3 className="font-bold text-lg mb-4">{t('filter_category')}</h3>
