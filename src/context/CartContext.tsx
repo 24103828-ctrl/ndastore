@@ -55,13 +55,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return id;
     });
 
+    const effectiveSessionId = user ? `user_${user.id}` : sessionId;
+
     const syncItemToDb = async (id: string, color: string | undefined, quantity: number) => {
         const payload: any = {
             product_id: id,
             color: color || '',
             quantity: quantity,
             user_id: user?.id || null,
-            session_id: sessionId
+            session_id: effectiveSessionId
         };
 
         const { error } = await (supabase.from('cart_additions' as any) as any).upsert(
@@ -73,30 +75,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const removeItemFromDb = async (id: string, color: string | undefined) => {
-        const query = (supabase.from('cart_additions' as any) as any).delete();
-
-        if (user?.id) {
-            query.eq('user_id', user.id).eq('product_id', id).eq('color', color || '');
-        } else {
-            query.match({
-                session_id: sessionId,
+        const { error } = await (supabase.from('cart_additions' as any) as any)
+            .delete()
+            .match({
+                session_id: effectiveSessionId,
                 product_id: id,
                 color: color || ''
             });
-        }
 
-        const { error } = await query;
         if (error) console.error('Cart remove error:', error);
     };
 
-    // Update user_id in database when user logs in
+    // Migrate guest cart to user cart on login
     useEffect(() => {
         if (user?.id) {
+            // First, link any anonymous items to this user and change their session_id
             (supabase.from('cart_additions' as any) as any)
-                .update({ user_id: user.id })
-                .eq('session_id', sessionId)
+                .update({
+                    user_id: user.id,
+                    session_id: `user_${user.id}`
+                })
+                .eq('session_id', sessionId) // find items belonging to THIS device's guest session
                 .then(({ error }: any) => {
-                    if (error) console.error('Error linking cart to user:', error);
+                    if (error) console.error('Error migrating cart to user:', error);
                 });
         }
     }, [user, sessionId]);
@@ -235,7 +236,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems([]);
         (supabase.from('cart_additions' as any) as any)
             .delete()
-            .eq('session_id', sessionId)
+            .eq('session_id', effectiveSessionId)
             .then(({ error }: any) => {
                 if (error) console.error('Cart clear error:', error);
             });
