@@ -75,9 +75,18 @@ export function Navbar() {
                         </div>
 
                         {/* Right Content: Icons & Mobile Menu Button - Fixed Width on Mobile */}
-                        <div className="flex items-center space-x-1 md:space-x-6 w-[120px] md:w-auto justify-end overflow-visible">
+                        <div className="flex items-center space-x-1 md:space-x-4 w-[160px] md:w-auto justify-end overflow-visible">
                             {/* Icons Overlay (Always Visible & Interactive) */}
                             <div className="flex items-center space-x-0.5 md:space-x-2 overflow-visible" id="cart-badge-container">
+                                {/* Language Switcher (Restored & Positioned Left) */}
+                                <button
+                                    onClick={() => setLanguage(language === 'VN' ? 'EN' : 'VN')}
+                                    className="flex items-center justify-center min-w-[32px] h-[32px] text-primary hover:bg-pink-50 rounded-full transition-all font-bold font-sans text-sm md:text-base border border-pink-100"
+                                    aria-label="Switch Language"
+                                >
+                                    {language === 'VN' ? 'EN' : 'VN'}
+                                </button>
+
                                 <button
                                     onClick={() => setIsSearchOpen(true)}
                                     className="text-gray-600 hover:text-primary hover:bg-pink-50 p-1.5 rounded-full transition-all duration-300 transform hover:rotate-12"
