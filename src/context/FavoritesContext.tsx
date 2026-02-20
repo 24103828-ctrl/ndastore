@@ -53,7 +53,10 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
                 .eq('product_id', productId);
 
             if (!error) {
+                // Rely on Realtime or update immediately for responsiveness
                 setFavorites(prev => prev.filter(id => id !== productId));
+            } else {
+                console.error('Error removing favorite:', error);
             }
         } else {
             // Add
@@ -62,6 +65,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
             if (!error) {
                 setFavorites(prev => [...prev, productId]);
+            } else {
+                console.error('Error adding favorite:', error);
             }
         }
     };
