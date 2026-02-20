@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { supabase } from '../lib/supabase';
