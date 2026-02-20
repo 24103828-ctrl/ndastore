@@ -78,10 +78,10 @@ export function Navbar() {
                         <div className="flex items-center space-x-1 md:space-x-4 w-[180px] md:w-auto justify-end overflow-visible pr-1">
                             {/* Icons Overlay (Always Visible & Interactive) */}
                             <div className="flex items-center space-x-0.5 md:space-x-2 overflow-visible" id="cart-badge-container">
-                                {/* Language Switcher (Refined Spacing & Size) */}
+                                {/* Language Switcher (Hidden on mobile header, moved to sidebar) */}
                                 <button
                                     onClick={() => setLanguage(language === 'VN' ? 'EN' : 'VN')}
-                                    className="flex items-center justify-center min-w-[36px] h-[36px] text-primary hover:bg-pink-50 rounded-full transition-all font-bold font-sans text-[14px] border border-pink-100 mr-[10px] z-20"
+                                    className="hidden md:flex items-center justify-center min-w-[36px] h-[36px] text-primary hover:bg-pink-50 rounded-full transition-all font-bold font-sans text-[14px] border border-pink-100 mr-[10px] z-20"
                                     aria-label="Switch Language"
                                 >
                                     {language === 'VN' ? 'EN' : 'VN'}
