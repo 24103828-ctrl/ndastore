@@ -101,20 +101,21 @@ export function Navbar() {
                                     aria-label="Cart"
                                 >
                                     <ShoppingBag className="h-6 w-6 group-hover:animate-bounce-short" />
-                                    {cartCount > 0 && (
-                                        <span
-                                            id="cart-badge"
-                                            className="absolute bg-[#D81B60] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center shadow-lg border-2 border-white transform group-hover:scale-110 transition-transform font-sans"
-                                            style={{
-                                                position: 'absolute',
-                                                top: '-5px',
-                                                right: '-5px',
-                                                zIndex: 10
-                                            }}
-                                        >
-                                            {cartCount}
-                                        </span>
-                                    )}
+                                    <span
+                                        id="cart-badge"
+                                        className={cn(
+                                            "absolute bg-[#D81B60] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center shadow-lg border-2 border-white transform transition-all duration-300 font-sans",
+                                            cartCount > 0 ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                                        )}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '-5px',
+                                            right: '-5px',
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        {cartCount}
+                                    </span>
                                 </Link>
                             </div>
 
@@ -169,19 +170,27 @@ export function Navbar() {
                             {[
                                 { label: t('home'), path: '/', icon: Globe },
                                 { label: t('shop'), path: '/shop', icon: ShoppingBag },
+                                { label: t('cart'), path: '/cart', icon: ShoppingBag, count: cartCount },
                                 { label: t('about'), path: '/about', icon: Globe },
                                 { label: t('contact'), path: '/contact', icon: Globe },
-                                { label: t('favorites'), path: '/favorites', icon: Heart },
+                                { label: t('favorites'), path: '/favorites', icon: Heart, count: favorites.length },
                                 { label: t('account'), path: '/account', icon: User },
                             ].map((item, index) => (
                                 <Link
                                     key={index}
                                     to={item.path}
                                     onClick={() => setIsMenuOpen(false)}
-                                    className="flex items-center gap-4 px-4 py-3 text-gray-700 hover:text-primary hover:bg-pink-50 rounded-xl transition-all font-medium border border-transparent hover:border-pink-100"
+                                    className="flex items-center justify-between px-4 py-3 text-gray-700 hover:text-primary hover:bg-pink-50 rounded-xl transition-all font-medium border border-transparent hover:border-pink-100"
                                 >
-                                    <item.icon className="h-5 w-5 opacity-70" />
-                                    <span>{item.label}</span>
+                                    <div className="flex items-center gap-4">
+                                        <item.icon className="h-5 w-5 opacity-70" />
+                                        <span>{item.label}</span>
+                                    </div>
+                                    {item.count !== undefined && item.count > 0 && (
+                                        <span className="bg-primary text-white text-[10px] font-bold rounded-full h-5 px-2 flex items-center justify-center">
+                                            {item.count}
+                                        </span>
+                                    )}
                                 </Link>
                             ))}
                         </div>
