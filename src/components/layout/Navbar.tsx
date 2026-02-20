@@ -47,14 +47,16 @@ export function Navbar() {
             )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
-                        {/* Mobile menu button (Moved to Left) */}
+                        {/* Mobile menu button (Moved to Left) - HIGHLIGHTED FOR DEBUGGING */}
                         <div className="md:hidden flex items-center">
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="text-gray-600 hover:text-primary p-2 transition-colors -ml-2"
+                                className="bg-primary text-white p-3 rounded-xl shadow-lg transition-all active:scale-95 -ml-2"
+                                aria-label="Open Menu"
                             >
-                                <Menu className="h-6 w-6" />
+                                <Menu className="h-7 w-7" />
                             </button>
+                            <span className="ml-2 text-[10px] text-primary font-bold bg-pink-50 px-1 border border-pink-100 rounded">v2.1</span>
                         </div>
 
                         {/* Logo (Gradient Cherry Blossom Theme) */}
