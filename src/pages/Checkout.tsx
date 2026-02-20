@@ -4,7 +4,7 @@ import { Layout } from '../components/layout/Layout';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { CheckCircle, Copy, ChevronRight, MapPin, CreditCard } from 'lucide-react';
+import { CheckCircle, ChevronRight, MapPin, CreditCard } from 'lucide-react';
 
 export function Checkout() {
     const { items, cartTotal, clearCart } = useCart();
