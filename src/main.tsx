@@ -13,17 +13,17 @@ import { ToastProvider } from './context/ToastContext.tsx'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <AuthProvider>
-        <LanguageProvider>
-          <FavoritesProvider>
-            <CartProvider>
-              <ToastProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <FavoritesProvider>
+              <CartProvider>
                 <App />
-              </ToastProvider>
-            </CartProvider>
-          </FavoritesProvider>
-        </LanguageProvider>
-      </AuthProvider>
+              </CartProvider>
+            </FavoritesProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </ToastProvider>
     </ErrorBoundary>
   </StrictMode>,
 )
