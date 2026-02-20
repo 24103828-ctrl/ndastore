@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { supabase } from '../lib/supabase';
@@ -298,21 +299,25 @@ export function ProductDetail() {
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <button
+                                            <motion.button
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.95 }}
                                                 onClick={handleAddToCart}
                                                 disabled={isProcessing}
                                                 className="bg-white border-2 border-primary text-primary py-3 px-6 rounded-full font-bold hover:bg-pink-50 transition-colors flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <ShoppingBag className={cn("w-5 h-5", !isProcessing && "group-hover:animate-bounce-short")} />
                                                 {isProcessing ? 'Đang xử lý...' : t('add_to_cart')}
-                                            </button>
+                                            </motion.button>
                                             <div className="flex gap-4">
-                                                <button
+                                                <motion.button
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
                                                     onClick={handleBuyNow}
-                                                    className="flex-1 bg-gradient-to-r from-primary to-pink-600 text-white py-3 px-6 rounded-full font-bold hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2"
+                                                    className="flex-1 bg-gradient-to-r from-primary to-pink-600 text-white py-3 px-6 rounded-full font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                                                 >
                                                     {t('buy_now')}
-                                                </button>
+                                                </motion.button>
                                                 <button
                                                     onClick={() => product && toggleFavorite(product.id)}
                                                     className={cn(

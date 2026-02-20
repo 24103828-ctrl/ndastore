@@ -3,6 +3,7 @@ import { ShoppingBag, CreditCard, Heart, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import { cn } from '../../lib/utils';
+import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 
 interface ProductCardProps {
@@ -121,20 +122,24 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
 
                 {/* Quick Actions Overlay */}
                 <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col gap-2">
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleAddToCart}
                         className="w-full bg-white text-gray-900 py-2 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 shadow-lg"
                     >
                         <ShoppingBag className="h-4 w-4" />
                         Thêm vào giỏ
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleBuyNow}
                         className="w-full bg-primary text-white py-2 rounded-full font-bold text-sm hover:bg-pink-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
                     >
                         <CreditCard className="h-4 w-4" />
                         Mua ngay
-                    </button>
+                    </motion.button>
                 </div>
 
                 {/* Sale Badge */}

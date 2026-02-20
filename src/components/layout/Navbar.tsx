@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, User, Menu, X, Heart, Globe } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -123,21 +124,27 @@ export function Navbar() {
                                     aria-label="Cart"
                                 >
                                     <ShoppingBag className="h-6 w-6 group-hover:animate-bounce-short" />
-                                    <span
-                                        id="cart-badge"
-                                        className={cn(
-                                            "absolute bg-[#D81B60] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center shadow-lg border-2 border-white transform transition-all duration-300 font-sans",
-                                            cartCount > 0 ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                                    <AnimatePresence mode="popLayout">
+                                        {cartCount > 0 && (
+                                            <motion.span
+                                                key={cartCount}
+                                                initial={{ scale: 0.5, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                exit={{ scale: 0.5, opacity: 0 }}
+                                                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                                                id="cart-badge"
+                                                className="absolute bg-[#D81B60] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center shadow-lg border-2 border-white transform font-sans"
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '-5px',
+                                                    right: '-5px',
+                                                    zIndex: 10
+                                                }}
+                                            >
+                                                {cartCount}
+                                            </motion.span>
                                         )}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '-5px',
-                                            right: '-5px',
-                                            zIndex: 10
-                                        }}
-                                    >
-                                        {cartCount}
-                                    </span>
+                                    </AnimatePresence>
                                 </Link>
                             </div>
 

@@ -16,9 +16,9 @@ interface CartItem {
 
 interface CartContextType {
     items: CartItem[];
-    addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => Promise<void>;
+    addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
     removeItem: (id: string, color?: string) => Promise<void>;
-    updateQuantity: (id: string, quantity: number, color?: string) => Promise<void>;
+    updateQuantity: (id: string, quantity: number, color?: string) => void;
     clearCart: () => Promise<void>;
     cartCount: number;
     cartTotal: number;
@@ -38,6 +38,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const { showToast } = useToast();
 
     const initialFetchDone = useRef(false);
+    // Track debounced syncs per product+color combo
+    const syncTimersRef = useRef<Record<string, any>>({});
 
     const [sessionId] = useState(() => {
         let id = localStorage.getItem('cart_session_id');
@@ -82,7 +84,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     if (!product) return null;
                     return {
                         id: cartItem.product_id,
-                        dbId: cartItem.id, // Capture Database Row ID
+                        dbId: cartItem.id,
                         name: product.name,
                         price: product.sale_price || product.price || 0,
                         image: product.images?.[0] || '',
@@ -119,8 +121,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [items, user, authLoading]);
 
-    const syncItemToDb = async (id: string, color: string | undefined, quantity: number) => {
-        if (!id) return;
+    const syncItemToDbBatch = async (id: string, color: string | undefined, quantity: number) => {
         const payload: any = {
             product_id: id,
             color: color || '',
@@ -129,12 +130,75 @@ export function CartProvider({ children }: { children: ReactNode }) {
             session_id: effectiveSessionId
         };
 
-        const { error } = await (supabase.from('cart_additions' as any) as any).upsert(
-            payload,
-            { onConflict: 'session_id,product_id,color' }
-        );
+        setIsProcessing(true);
+        try {
+            const { error } = await (supabase.from('cart_additions' as any) as any).upsert(
+                payload,
+                { onConflict: 'session_id,product_id,color' }
+            );
+            if (error) throw error;
+        } catch (error: any) {
+            console.error('Batch sync error:', error);
+            showToast('Lỗi đồng bộ giỏ hàng', 'error');
+            fetchUserCart(); // Rollback to server state
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
-        if (error) throw error;
+    const debouncedSync = (id: string, color: string | undefined) => {
+        if (!user) return; // Guests use localStorage only
+
+        const key = `${id}_${color || ''}`;
+        if (syncTimersRef.current[key]) {
+            clearTimeout(syncTimersRef.current[key]);
+        }
+
+        syncTimersRef.current[key] = setTimeout(() => {
+            // Pull the LATEST quantity from state when the timer fires
+            setItems(currentItems => {
+                const item = currentItems.find(i => i.id === id && i.color === color);
+                if (item) {
+                    syncItemToDbBatch(id, color, item.quantity);
+                }
+                return currentItems;
+            });
+            delete syncTimersRef.current[key];
+        }, 800); // 800ms debounce
+    };
+
+    const addItem = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+        if (!newItem.id) return;
+
+        let finalQuantity = newItem.quantity || 1;
+
+        // 1. Immediate UI update (High Speed Addition)
+        setItems(prevItems => {
+            const existing = prevItems.find(i => i.id === newItem.id && i.color === newItem.color);
+            if (existing) {
+                finalQuantity = existing.quantity + (newItem.quantity || 1);
+                return prevItems.map(i => i === existing ? { ...i, quantity: finalQuantity } : i);
+            }
+            return [...prevItems, { ...newItem, quantity: finalQuantity }];
+        });
+        setIsCartOpen(true);
+
+        // 2. Schedule Sync (debouncedSync will pull the latest quantity from state)
+        debouncedSync(newItem.id, newItem.color);
+    };
+
+    const updateQuantity = (id: string, quantity: number, color?: string) => {
+        if (!id) return;
+        if (quantity < 1) {
+            removeItem(id, color);
+            return;
+        }
+
+        // 1. Immediate UI update
+        setItems(prev => prev.map(item => (item.id === id && item.color === color) ? { ...item, quantity } : item));
+
+        // 2. Schedule Sync
+        debouncedSync(id, color);
     };
 
     const removeItemFromDb = async (id: string, color: string | undefined, dbId?: string | number) => {
@@ -142,7 +206,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         let query = (supabase.from('cart_additions' as any) as any).delete();
 
-        // Prefer explicit ID if available
         if (dbId) {
             query = query.eq('id', dbId);
         } else {
@@ -156,113 +219,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
     };
 
-    useEffect(() => {
-        if (!user) return;
-
-        const channel = supabase
-            .channel(`cart_realtime_${user.id}`)
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'cart_additions', filter: `user_id=eq.${user.id}` },
-                () => { fetchUserCart(); }
-            )
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, [user?.id, fetchUserCart]);
-
-    const addItem = async (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
-        if (!newItem.id || isProcessing) return;
-        setIsProcessing(true);
-
-        try {
-            const qtyToAdd = newItem.quantity || 1;
-            if (user) {
-                const existingItem = items.find(item => item.id === newItem.id && item.color === newItem.color);
-                const newTotalQty = existingItem ? existingItem.quantity + qtyToAdd : qtyToAdd;
-
-                await syncItemToDb(newItem.id, newItem.color, newTotalQty);
-                await fetchUserCart();
-            } else {
-                setItems(currentItems => {
-                    const existingItem = currentItems.find(item =>
-                        item.id === newItem.id && item.color === newItem.color
-                    );
-                    return existingItem
-                        ? currentItems.map(item =>
-                            (item.id === newItem.id && item.color === newItem.color)
-                                ? { ...item, quantity: item.quantity + qtyToAdd }
-                                : item
-                        )
-                        : [...currentItems, { ...newItem, quantity: qtyToAdd }];
-                });
-            }
-            setIsCartOpen(true);
-        } catch (error: any) {
-            console.error('Cart add error:', error);
-            alert(`Thêm thất bại: ${error.message || 'Lỗi kết nối'}`);
-            showToast('Lỗi khi thêm vào giỏ hàng', 'error');
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
     const removeItem = async (id: string, color?: string) => {
         if (!id || isProcessing) return;
         setIsProcessing(true);
 
         const itemToRemove = items.find(item => item.id === id && item.color === color);
+        setItems(prev => prev.filter(item => !(item.id === id && item.color === color)));
 
         try {
-            if (user) {
-                // Ensure the deletion is COMPLETED on server
-                await removeItemFromDb(id, color, itemToRemove?.dbId);
-
-                // Immediately purge ANY local cache to prevent ghosting
-                localStorage.removeItem('cart');
-
-                // Immediate local state update for zero-latency feel
-                setItems(prev => prev.filter(item => !(item.id === id && item.color === color)));
-
-                // Final fetch to synchronize state perfectly
-                await fetchUserCart();
-            } else {
-                setItems(currentItems => currentItems.filter(item => !(item.id === id && item.color === color)));
-                await removeItemFromDb(id, color);
-                localStorage.removeItem('cart');
-            }
+            await removeItemFromDb(id, color, itemToRemove?.dbId);
+            localStorage.removeItem('cart');
         } catch (error: any) {
             console.error('Cart remove error:', error);
-            const errorMsg = error.message || 'Lỗi không xác định khi xóa sản phẩm';
-            alert(`Xóa thất bại: ${errorMsg}`);
-            showToast(`Lỗi: ${errorMsg}`, 'error');
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const updateQuantity = async (id: string, quantity: number, color?: string) => {
-        if (!id || isProcessing) return;
-        if (quantity < 1) {
-            await removeItem(id, color);
-            return;
-        }
-
-        setIsProcessing(true);
-        try {
-            if (user) {
-                await syncItemToDb(id, color, quantity);
-                await fetchUserCart();
-            } else {
-                setItems(currentItems =>
-                    currentItems.map(item =>
-                        (item.id === id && item.color === color) ? { ...item, quantity } : item
-                    )
-                );
-            }
-        } catch (error: any) {
-            console.error('Cart update error:', error);
-            alert(`Cập nhật số lượng thất bại: ${error.message}`);
+            alert(`Xóa thất bại: ${error.message}`);
+            fetchUserCart();
         } finally {
             setIsProcessing(false);
         }
@@ -271,25 +241,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const clearCart = async () => {
         if (isProcessing) return;
         setIsProcessing(true);
+        const originalItems = [...items];
+        setItems([]);
+        localStorage.removeItem('cart');
+
         try {
-            localStorage.removeItem('cart');
             if (user) {
-                await (supabase.from('cart_additions' as any) as any)
-                    .delete()
-                    .eq('user_id', user.id);
+                await (supabase.from('cart_additions' as any) as any).delete().eq('user_id', user.id);
             } else {
-                await (supabase.from('cart_additions' as any) as any)
-                    .delete()
-                    .eq('session_id', sessionId);
+                await (supabase.from('cart_additions' as any) as any).delete().eq('session_id', sessionId);
             }
-            setItems([]);
         } catch (error: any) {
             console.error('Cart clear error:', error);
             alert(`Xóa giỏ hàng thất bại: ${error.message}`);
+            setItems(originalItems);
         } finally {
             setIsProcessing(false);
         }
     };
+
+    useEffect(() => {
+        if (!user) return;
+
+        const channel = supabase
+            .channel(`cart_realtime_${user.id}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'cart_additions', filter: `user_id=eq.${user.id}` },
+                () => {
+                    // Only re-fetch if not currently syncing or pending sync
+                    if (!isProcessing && Object.keys(syncTimersRef.current).length === 0) {
+                        fetchUserCart();
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [user?.id, fetchUserCart, isProcessing]);
 
     const cartCount = useMemo(() => items.reduce((total, item) => total + item.quantity, 0), [items]);
     const cartTotal = useMemo(() => items.reduce((total, item) => total + (item.price * item.quantity), 0), [items]);
