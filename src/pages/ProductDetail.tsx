@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { ProductCard } from '../components/product/ProductCard';
 import { Star, Minus, Plus, ShoppingBag, Truck, Share2, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useLanguage } from '../context/LanguageContext';
 
 // Types (should ideally be shared)
 interface Product {
@@ -26,6 +27,7 @@ export function ProductDetail() {
     const { addItem } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const viewStartTime = useRef<number>(Date.now());
     const currentProductId = useRef<string | null>(null);
 
@@ -157,8 +159,8 @@ export function ProductDetail() {
         return (
             <Layout>
                 <div className="min-h-screen flex flex-col items-center justify-center">
-                    <h2 className="text-2xl font-bold mb-4">Không tìm thấy sản phẩm</h2>
-                    <Link to="/shop" className="text-primary underline">Quay lại cửa hàng</Link>
+                    <h2 className="text-2xl font-bold mb-4">{t('product_not_found')}</h2>
+                    <Link to="/shop" className="text-primary underline">{t('back_to_shop')}</Link>
                 </div>
             </Layout>
         )
@@ -175,9 +177,9 @@ export function ProductDetail() {
 
                     {/* Breadcrumb */}
                     <nav className="text-sm text-gray-500 mb-8">
-                        <Link to="/" className="hover:text-primary">Trang chủ</Link>
+                        <Link to="/" className="hover:text-primary">{t('home')}</Link>
                         <span className="mx-2">/</span>
-                        <Link to="/shop" className="hover:text-primary">Sản phẩm</Link>
+                        <Link to="/shop" className="hover:text-primary">{t('shop')}</Link>
                         <span className="mx-2">/</span>
                         <span className="text-dark font-medium">{product.name}</span>
                     </nav>
@@ -199,7 +201,7 @@ export function ProductDetail() {
                                     />
                                     {product.sale_price && (
                                         <div className="absolute top-4 left-4 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded">
-                                            SALE
+                                            {t('sale')}
                                         </div>
                                     )}
 
@@ -253,22 +255,22 @@ export function ProductDetail() {
                                                 <Star key={s} className="w-5 h-5 fill-current" />
                                             ))}
                                         </div>
-                                        <span className="text-gray-400 text-sm">(0 đánh giá)</span>
+                                        <span className="text-gray-400 text-sm">(0 {t('reviews')})</span>
                                     </div>
 
                                     <div className="text-2xl mb-8 flex items-center gap-4">
                                         {product.sale_price ? (
                                             <>
-                                                <span className="font-bold text-primary">{formatPrice(product.sale_price)}</span>
-                                                <span className="text-gray-400 line-through text-lg">{formatPrice(product.price)}</span>
+                                                <span className="font-bold text-primary font-sans">{formatPrice(product.sale_price)}</span>
+                                                <span className="text-gray-400 line-through text-lg font-sans">{formatPrice(product.price)}</span>
                                             </>
                                         ) : (
-                                            <span className="font-bold text-primary">{formatPrice(product.price)}</span>
+                                            <span className="font-bold text-primary font-sans">{formatPrice(product.price)}</span>
                                         )}
                                     </div>
 
                                     <div className="prose text-gray-600 mb-8 sm:pr-8">
-                                        <p>{product.description || 'Chưa có mô tả cho sản phẩm này.'}</p>
+                                        <p>{product.description || t('no_description')}</p>
                                     </div>
 
 
@@ -298,14 +300,14 @@ export function ProductDetail() {
                                                 className="bg-white border-2 border-primary text-primary py-3 px-6 rounded-full font-bold hover:bg-pink-50 transition-colors flex items-center justify-center gap-2 group"
                                             >
                                                 <ShoppingBag className="w-5 h-5 group-hover:animate-bounce-short" />
-                                                Thêm vào giỏ
+                                                {t('add_to_cart')}
                                             </button>
                                             <div className="flex gap-4">
                                                 <button
                                                     onClick={handleBuyNow}
                                                     className="flex-1 bg-gradient-to-r from-primary to-pink-600 text-white py-3 px-6 rounded-full font-bold hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2"
                                                 >
-                                                    Mua ngay
+                                                    {t('buy_now')}
                                                 </button>
                                                 <button
                                                     onClick={() => product && toggleFavorite(product.id)}
@@ -325,11 +327,11 @@ export function ProductDetail() {
                                     <div className="space-y-4 pt-8 border-t border-gray-100 text-sm text-gray-600">
                                         <div className="flex items-center gap-3">
                                             <Truck className="w-5 h-5 text-primary" />
-                                            <span>Miễn phí vận chuyển toàn quốc</span>
+                                            <span>{t('free_shipping')}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <Share2 className="w-5 h-5 text-primary" />
-                                            <span>Chia sẻ sản phẩm</span>
+                                            <span>{t('share_product')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -340,7 +342,7 @@ export function ProductDetail() {
                     {/* Related Products */}
                     {relatedProducts.length > 0 && (
                         <div className="mt-16">
-                            <h2 className="text-2xl font-serif font-bold mb-8">Sản phẩm liên quan</h2>
+                            <h2 className="text-2xl font-serif font-bold mb-8">{t('related_products')}</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {relatedProducts.map(p => (
                                     <ProductCard key={p.id} product={p} />

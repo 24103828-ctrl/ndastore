@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useCart } from '../context/CartContext';
 import { Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export function Cart() {
     const { items, removeItem, updateQuantity, cartTotal } = useCart();
+    const { t } = useLanguage();
 
     const formatPrice = (p: number) =>
         new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
@@ -13,16 +15,16 @@ export function Cart() {
         <Layout>
             <div className="bg-stone-50 min-h-screen py-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-serif font-bold mb-8">Giỏ hàng của bạn</h1>
+                    <h1 className="text-3xl font-serif font-bold mb-8">{t('cart_title')}</h1>
 
                     {items.length === 0 ? (
                         <div className="bg-white p-10 rounded-lg shadow-sm text-center">
-                            <p className="text-xl text-gray-500 mb-6">Giỏ hàng của bạn đang trống.</p>
+                            <p className="text-xl text-gray-500 mb-6">{t('cart_empty')}</p>
                             <Link
                                 to="/shop"
                                 className="inline-flex items-center bg-primary text-dark px-6 py-2 rounded-full font-bold hover:bg-dark hover:text-white transition-colors"
                             >
-                                Tiếp tục mua sắm
+                                {t('continue_shopping')}
                             </Link>
                         </div>
                     ) : (
@@ -46,7 +48,7 @@ export function Cart() {
                                                         <Link to={`/product/${item.id}`}>{item.name}</Link>
                                                     </h3>
                                                     {item.color && (
-                                                        <p className="text-sm text-gray-500 mb-1 font-medium">Màu sắc: <span className="text-primary">{item.color}</span></p>
+                                                        <p className="text-sm text-gray-500 mb-1 font-medium">{t('color')}: <span className="text-primary">{item.color}</span></p>
                                                     )}
                                                     <p className="text-primary font-bold mb-2">{formatPrice(item.price)}</p>
                                                 </div>
@@ -74,7 +76,7 @@ export function Cart() {
                                                 <button
                                                     onClick={() => removeItem(item.id, item.color)}
                                                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                    title="Xóa"
+                                                    title={t('remove_item')}
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
@@ -87,20 +89,24 @@ export function Cart() {
                             {/* Order Summary */}
                             <div className="lg:w-96">
                                 <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                                    <h2 className="text-xl font-bold mb-6">Tổng đơn hàng</h2>
+                                    <h2 className="text-xl font-bold mb-6">{t('cart_total')}</h2>
 
                                     <div className="space-y-4 mb-6">
                                         <div className="flex justify-between text-gray-600">
-                                            <span>Tạm tính</span>
+                                            <span>{t('cart_total')}</span>
                                             <span>{formatPrice(cartTotal)}</span>
                                         </div>
                                         <div className="flex justify-between text-gray-600">
-                                            <span>Vận chuyển</span>
-                                            <span className="text-green-600 font-medium">Miễn phí</span>
+                                            <span>{t('shipping_info')}</span>
+                                            {cartTotal >= 200000 ? (
+                                                <span className="text-green-600 font-medium">{t('free')}</span>
+                                            ) : (
+                                                <span>{formatPrice(21000)}</span>
+                                            )}
                                         </div>
                                         <div className="border-t border-gray-100 pt-4 flex justify-between font-bold text-lg">
-                                            <span>Tổng tiền</span>
-                                            <span className="text-primary">{formatPrice(cartTotal)}</span>
+                                            <span>{t('total_column')}</span>
+                                            <span className="text-primary">{formatPrice(cartTotal + (cartTotal >= 200000 ? 0 : 21000))}</span>
                                         </div>
                                     </div>
 
@@ -108,11 +114,11 @@ export function Cart() {
                                         to="/checkout"
                                         className="block w-full bg-dark text-white text-center py-3 rounded-full font-bold hover:bg-primary transition-colors flex items-center justify-center"
                                     >
-                                        Thanh toán <ArrowRight className="ml-2 w-4 h-4" />
+                                        {t('checkout_button')} <ArrowRight className="ml-2 w-4 h-4" />
                                     </Link>
 
                                     <p className="text-xs text-gray-400 text-center mt-4">
-                                        Thanh toán bảo mật 100%. Đổi trả trong 30 ngày.
+                                        {t('secure_checkout_note')}
                                     </p>
                                 </div>
                             </div>

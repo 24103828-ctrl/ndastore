@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { ProductCard } from '../components/product/ProductCard';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from '../context/LanguageContext';
 
 import bghoadao from '../image/bghoadao.png';
 
@@ -20,6 +21,7 @@ interface Product {
 export function Home() {
     const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchFeaturedProducts();
@@ -50,12 +52,11 @@ export function Home() {
                     />
                 </div>
                 <div className="relative z-10 text-center px-4">
-
                     <Link
                         to="/shop"
                         className="inline-flex items-center bg-primary text-white px-8 py-3 rounded-full font-bold hover:bg-pink-700 transition-all transform hover:scale-105 shadow-lg"
                     >
-                        Mua Sắm Ngay <ArrowRight className="ml-2 h-5 w-5" />
+                        {t('shop_now')} <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                 </div>
             </section>
@@ -68,22 +69,22 @@ export function Home() {
                             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-secondary text-primary mb-4">
                                 <Truck className="h-8 w-8" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">Miễn Phí Vận Chuyển</h3>
-                            <p className="text-gray-600">Cho đơn hàng trên 200.000₫ toàn quốc</p>
+                            <h3 className="text-xl font-bold mb-2">{t('feature_free_shipping_title')}</h3>
+                            <p className="text-gray-600">{t('feature_free_shipping_desc')}</p>
                         </div>
                         <div className="p-6">
                             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-secondary text-primary mb-4">
                                 <CheckCircle className="h-8 w-8" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">Chất Lượng Cam Kết</h3>
-                            <p className="text-gray-600">Da thật 100%, bảo hành chính hãng 6 tháng</p>
+                            <h3 className="text-xl font-bold mb-2">{t('feature_quality_title')}</h3>
+                            <p className="text-gray-600">{t('feature_quality_desc')}</p>
                         </div>
                         <div className="p-6">
                             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-secondary text-primary mb-4">
                                 <Shield className="h-8 w-8" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">Thanh Toán An Toàn</h3>
-                            <p className="text-gray-600">Đa dạng phương thức, bảo mật tuyệt đối</p>
+                            <h3 className="text-xl font-bold mb-2">{t('feature_secure_payment_title')}</h3>
+                            <p className="text-gray-600">{t('feature_secure_payment_desc')}</p>
                         </div>
                     </div>
                 </div>
@@ -92,7 +93,7 @@ export function Home() {
             {/* Featured Products */}
             <section className="py-16 bg-stone-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-serif font-bold text-center mb-12">Sản Phẩm Nổi Bật</h2>
+                    <h2 className="text-3xl font-serif font-bold text-center mb-12">{t('featured_products')}</h2>
                     {loading ? (
                         <div className="flex justify-center h-40 items-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -103,13 +104,13 @@ export function Home() {
                                 <ProductCard key={product.id} product={product} />
                             ))}
                             {featuredProducts.length === 0 && (
-                                <div className="col-span-full text-center text-gray-500">Chưa có sản phẩm nào.</div>
+                                <div className="col-span-full text-center text-gray-500">{t('no_products')}</div>
                             )}
                         </div>
                     )}
                     <div className="text-center mt-12">
                         <Link to="/shop" className="text-dark border-b-2 border-primary pb-1 hover:text-primary transition-colors font-medium">
-                            Xem tất cả sản phẩm
+                            {t('view_all')}
                         </Link>
                     </div>
                 </div>

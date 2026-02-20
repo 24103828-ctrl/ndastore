@@ -155,11 +155,11 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
                 <div className="flex items-center gap-2 mt-2">
                     {product.sale_price ? (
                         <>
-                            <span className="text-primary font-bold text-lg">{formatPrice(product.sale_price)}</span>
-                            <span className="text-gray-400 text-sm line-through">{formatPrice(product.price)}</span>
+                            <span className="text-primary font-bold text-lg font-sans">{formatPrice(product.sale_price)}</span>
+                            <span className="text-gray-400 text-sm line-through font-sans">{formatPrice(product.price)}</span>
                         </>
                     ) : (
-                        <span className="text-primary font-bold text-lg">{formatPrice(product.price)}</span>
+                        <span className="text-primary font-bold text-lg font-sans">{formatPrice(product.price)}</span>
                     )}
                 </div>
             </div>

@@ -1,7 +1,10 @@
 import { Facebook, Instagram, Twitter } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 export function Footer() {
+    const { t } = useLanguage();
+
     return (
         <footer className="bg-dark text-white pt-12 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -9,33 +12,33 @@ export function Footer() {
                     <div>
                         <h3 className="text-2xl font-serif text-primary mb-4">NDA STORE</h3>
                         <p className="text-gray-400 text-sm">
-                            Thương hiệu túi xách thời trang cao cấp, mang đến vẻ đẹp sang trọng và đẳng cấp cho phái đẹp.
+                            {t('footer_slogan')}
                         </p>
                     </div>
 
                     <div>
-                        <h4 className="text-lg font-medium mb-4">Liên kết nhanh</h4>
+                        <h4 className="text-lg font-medium mb-4">{t('quick_links')}</h4>
                         <ul className="space-y-2 text-sm text-gray-400">
-                            <li><Link to="/shop" className="hover:text-primary transition-colors">Sản phẩm</Link></li>
-                            <li><Link to="/about" className="hover:text-primary transition-colors">Về chúng tôi</Link></li>
-                            <li><Link to="/contact" className="hover:text-primary transition-colors">Liên hệ</Link></li>
-                            <li><Link to="/policy" className="hover:text-primary transition-colors">Chính sách đồi trả</Link></li>
+                            <li><Link to="/shop" className="hover:text-primary transition-colors">{t('shop')}</Link></li>
+                            <li><Link to="/about" className="hover:text-primary transition-colors">{t('about')}</Link></li>
+                            <li><Link to="/contact" className="hover:text-primary transition-colors">{t('contact')}</Link></li>
+                            <li><Link to="/policy" className="hover:text-primary transition-colors">{t('policy')}</Link></li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-lg font-medium mb-4">Liên hệ</h4>
+                        <h4 className="text-lg font-medium mb-4">{t('contact_info')}</h4>
                         <ul className="space-y-2 text-sm text-gray-400">
-                            <li>Số 123, Đường ABC, TP.HCM</li>
-                            <li>Hotline: 0123 456 789</li>
-                            <li>Email: support@ndastore.com</li>
+                            <li>{t('address_value')}</li>
+                            <li>{t('hotline_label')}: 0862 595 798</li>
+                            <li>{t('email_label')}: 24103828@st.phenikaa-uni.edu.vn</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-lg font-medium mb-4">Kết nối</h4>
+                        <h4 className="text-lg font-medium mb-4">{t('connect')}</h4>
                         <div className="flex space-x-4">
-                            <a href="#" className="text-gray-400 hover:text-primary transition-colors">
+                            <a href="https://www.facebook.com/phamhuucuongvippro/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors">
                                 <Facebook className="h-6 w-6" />
                             </a>
                             <a href="#" className="text-gray-400 hover:text-primary transition-colors">
@@ -49,7 +52,7 @@ export function Footer() {
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-                    &copy; {new Date().getFullYear()} NDA STORE. All rights reserved.
+                    &copy; {new Date().getFullYear()} NDA STORE. {t('rights_reserved')}
                 </div>
             </div>
         </footer>

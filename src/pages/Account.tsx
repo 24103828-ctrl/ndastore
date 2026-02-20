@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Package, User as UserIcon, LogOut } from 'lucide-react';
+import { Package, User as UserIcon, LogOut, Copy } from 'lucide-react';
 
 interface Order {
     id: string;
@@ -29,6 +29,7 @@ export function Account() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showQR, setShowQR] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) {
@@ -248,17 +249,76 @@ export function Account() {
                                                     </div>
 
                                                     {/* Footer: Total and Payment Method */}
-                                                    <div className="bg-white px-6 py-4 border-t border-stone-100 flex items-center justify-between">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-stone-300"></div>
-                                                            <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-                                                                {order.payment_method === 'cod' ? 'Thanh toán COD' : 'Chuyển khoản'}
-                                                            </p>
+                                                    <div className="bg-white px-6 py-4 border-t border-stone-100 flex flex-col gap-4">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-2 h-2 rounded-full bg-stone-300"></div>
+                                                                <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                                                                    {order.payment_method === 'cod' ? 'Thanh toán COD' : 'Chuyển khoản'}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">Tổng giá trị đơn hàng</p>
+                                                                <p className="text-lg font-black text-primary leading-none">{formatPrice(order.total_amount)}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">Tổng giá trị đơn hàng</p>
-                                                            <p className="text-lg font-black text-primary leading-none">{formatPrice(order.total_amount)}</p>
-                                                        </div>
+
+                                                        {/* QR Code Section for Pending Banking Orders */}
+                                                        {order.payment_method === 'banking' && order.status === 'pending' && (
+                                                            <div className="w-full">
+                                                                <button
+                                                                    onClick={() => setShowQR(showQR === order.id ? null : order.id)}
+                                                                    className="w-full py-2 border border-primary text-primary hover:bg-primary hover:text-white transition-colors rounded font-bold text-sm"
+                                                                >
+                                                                    {showQR === order.id ? 'Ẩn mã QR' : 'Thanh toán ngay (Xem mã QR)'}
+                                                                </button>
+
+                                                                {showQR === order.id && (
+                                                                    <div className="mt-4 p-4 bg-stone-50 rounded-lg border border-stone-200 animate-in fade-in zoom-in-95 duration-200">
+                                                                        <div className="flex flex-col md:flex-row gap-6 items-center">
+                                                                            <div className="w-full md:w-1/3 max-w-[200px]">
+                                                                                <img
+                                                                                    src={`https://img.vietqr.io/image/VCB-9862595798-compact2.png?amount=${order.total_amount}&addInfo=${`DH${order.id.split('-')[0].toUpperCase()}`}&accountName=PHAM%20HUU%20CUONG`}
+                                                                                    alt="Mã QR chuyển khoản"
+                                                                                    className="w-full h-auto rounded-lg border border-white shadow-sm"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="flex-1 space-y-2 text-sm w-full">
+                                                                                <p className="font-bold text-primary mb-2">Thông tin chuyển khoản</p>
+                                                                                <div className="grid grid-cols-[100px_1fr] gap-2">
+                                                                                    <span className="text-stone-500">Ngân hàng:</span>
+                                                                                    <span className="font-medium">Vietcombank</span>
+
+                                                                                    <span className="text-stone-500">Số tài khoản:</span>
+                                                                                    <span className="font-medium">9862595798</span>
+
+                                                                                    <span className="text-stone-500">Chủ tài khoản:</span>
+                                                                                    <span className="font-medium">PHAM HUU CUONG</span>
+
+                                                                                    <span className="text-stone-500">Số tiền:</span>
+                                                                                    <span className="font-bold text-primary">{formatPrice(order.total_amount)}</span>
+
+                                                                                    <span className="text-stone-500">Nội dung:</span>
+                                                                                    <span className="font-bold flex items-center gap-2">
+                                                                                        {`DH${order.id.split('-')[0].toUpperCase()}`}
+                                                                                        <Copy
+                                                                                            className="w-3.5 h-3.5 cursor-pointer text-stone-400 hover:text-primary"
+                                                                                            onClick={() => {
+                                                                                                navigator.clipboard.writeText(`DH${order.id.split('-')[0].toUpperCase()}`);
+                                                                                                alert('Đã sao chép nội dung!');
+                                                                                            }}
+                                                                                        />
+                                                                                    </span>
+                                                                                </div>
+                                                                                <p className="text-xs text-stone-400 mt-2 italic">
+                                                                                    * Vui lòng điền đúng nội dung chuyển khoản để đơn hàng được xử lý nhanh nhất.
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

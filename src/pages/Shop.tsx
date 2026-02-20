@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/product/ProductCard';
 import { Filter, Search } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Product {
     id: string;
@@ -25,6 +27,9 @@ export function Shop() {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
+
+    const [searchParams] = useSearchParams();
 
     // Filters
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -36,6 +41,17 @@ export function Shop() {
         fetchCategories();
         fetchProducts();
     }, []);
+
+    // Listen for URL changes to update search state
+    useEffect(() => {
+        const query = searchParams.get('q');
+        const min = searchParams.get('min');
+        const max = searchParams.get('max');
+
+        if (query) setSearchQuery(query);
+        if (min) setPriceRange(prev => [Number(min), prev[1]]);
+        if (max) setPriceRange(prev => [prev[0], Number(max)]);
+    }, [searchParams]);
 
     const fetchCategories = async () => {
         const { data } = await supabase.from('categories').select('*');
@@ -76,13 +92,13 @@ export function Shop() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                     <div className="flex flex-col md:flex-row mb-8 items-center justify-between gap-4">
-                        <h1 className="text-3xl font-serif font-bold text-dark">Sản phẩm</h1>
+                        <h1 className="text-3xl font-serif font-bold text-dark">{t('shop')}</h1>
 
                         {/* Search Bar */}
                         <div className="relative w-full md:w-96">
                             <input
                                 type="text"
-                                placeholder="Tìm kiếm sản phẩm..."
+                                placeholder={t('search_placeholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
@@ -95,7 +111,7 @@ export function Shop() {
                             className="md:hidden flex items-center gap-2 text-dark font-medium"
                             onClick={() => setShowFilters(!showFilters)}
                         >
-                            <Filter className="h-5 w-5" /> Bộ lộc
+                            <Filter className="h-5 w-5" /> {t('filter')}
                         </button>
                     </div>
 
@@ -104,14 +120,14 @@ export function Shop() {
                         <div className={`md:w-64 flex-shrink-0 space-y-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
                             {/* Categories */}
                             <div>
-                                <h3 className="font-bold text-lg mb-4">Danh mục</h3>
+                                <h3 className="font-bold text-lg mb-4">{t('filter_category')}</h3>
                                 <ul className="space-y-2">
                                     <li>
                                         <button
                                             onClick={() => setSelectedCategory('all')}
                                             className={`block w-full text-left ml-2 text-sm ${selectedCategory === 'all' ? 'text-primary font-bold' : 'text-gray-600 hover:text-primary'}`}
                                         >
-                                            Tất cả
+                                            {t('filter_all')}
                                         </button>
                                     </li>
                                     {categories.map(cat => (
@@ -129,7 +145,7 @@ export function Shop() {
 
                             {/* Price Filter */}
                             <div>
-                                <h3 className="font-bold text-lg mb-4">Khoảng giá</h3>
+                                <h3 className="font-bold text-lg mb-4">{t('filter_price')}</h3>
                                 <div className="px-2">
                                     <input
                                         type="range"
@@ -141,8 +157,8 @@ export function Shop() {
                                         className="w-full accent-primary"
                                     />
                                     <div className="flex justify-between text-xs text-gray-500 mt-2">
-                                        <span>{new Intl.NumberFormat('vi-VN').format(priceRange[0])}đ</span>
-                                        <span>{new Intl.NumberFormat('vi-VN').format(priceRange[1])}đ</span>
+                                        <span className="font-sans">{new Intl.NumberFormat('vi-VN').format(priceRange[0])}đ</span>
+                                        <span className="font-sans">{new Intl.NumberFormat('vi-VN').format(priceRange[1])}đ</span>
                                     </div>
                                 </div>
                             </div>
@@ -151,7 +167,7 @@ export function Shop() {
                         {/* Product Grid */}
                         <div className="flex-1">
                             {loading ? (
-                                <div className="text-center py-20">Đang tải sản phẩm...</div>
+                                <div className="text-center py-20">{t('loading_products')}</div>
                             ) : filteredProducts.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {filteredProducts.map(product => (
@@ -160,7 +176,7 @@ export function Shop() {
                                 </div>
                             ) : (
                                 <div className="text-center py-20 text-gray-500">
-                                    Không tìm thấy sản phẩm nào.
+                                    {t('no_products')}
                                 </div>
                             )}
                         </div>
