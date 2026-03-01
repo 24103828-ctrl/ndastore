@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
 
 interface FakeOrder {
