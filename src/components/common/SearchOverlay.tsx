@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { supabase } from '../../lib/supabase';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -14,6 +15,8 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     const [keyword, setKeyword] = useState('');
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
+    const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState('');
 
     useEffect(() => {
         if (isOpen) {
@@ -23,6 +26,13 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         } else {
             document.body.style.overflow = 'unset';
         }
+
+        const fetchCategories = async () => {
+            const { data } = await supabase.from('categories').select('*');
+            if (data) setCategories(data);
+        };
+        fetchCategories();
+
         return () => {
             document.body.style.overflow = 'unset';
         };
@@ -35,6 +45,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         if (keyword.trim()) params.append('q', keyword.trim());
         if (minPrice) params.append('min', minPrice);
         if (maxPrice) params.append('max', maxPrice);
+        if (selectedCategory) params.append('category', selectedCategory);
 
         navigate(`/shop?${params.toString()}`);
         onClose();
@@ -44,6 +55,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         setKeyword('');
         setMinPrice('');
         setMaxPrice('');
+        setSelectedCategory('');
     };
 
     if (!isOpen) return null;
@@ -81,6 +93,21 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                 className="w-full pl-12 pr-4 py-3 bg-stone-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                 autoFocus
                             />
+                        </div>
+
+                        {/* Category Dropdown */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('filter_category')}</label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="w-full px-4 py-3 bg-stone-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none"
+                            >
+                                <option value="">{t('filter_all')}</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         {/* Price Range Inputs */}

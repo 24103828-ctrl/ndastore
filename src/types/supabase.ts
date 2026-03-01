@@ -42,6 +42,7 @@ export type Database = {
                     price: number
                     product_id: string | null
                     quantity: number
+                    color: string | null
                 }
                 Insert: {
                     id?: string
@@ -49,6 +50,7 @@ export type Database = {
                     price: number
                     product_id?: string | null
                     quantity: number
+                    color?: string | null
                 }
                 Update: {
                     id?: string
@@ -56,6 +58,7 @@ export type Database = {
                     price?: number
                     product_id?: string | null
                     quantity?: number
+                    color?: string | null
                 }
                 Relationships: [
                     {
@@ -121,6 +124,7 @@ export type Database = {
                     price: number
                     sale_price: number | null
                     stock: number | null
+                    colors: string[] | null
                 }
                 Insert: {
                     category_id?: string | null
@@ -132,6 +136,7 @@ export type Database = {
                     price: number
                     sale_price?: number | null
                     stock?: number | null
+                    colors?: string[] | null
                 }
                 Update: {
                     category_id?: string | null
@@ -143,6 +148,7 @@ export type Database = {
                     price?: number
                     sale_price?: number | null
                     stock?: number | null
+                    colors?: string[] | null
                 }
                 Relationships: [
                     {
@@ -189,25 +195,28 @@ export type Database = {
                     comment: string | null
                     created_at: string
                     id: string
-                    product_id: string | null
-                    rating: number | null
-                    user_id: string | null
+                    product_id: string
+                    rating: number
+                    user_id: string
+                    order_id: string
                 }
                 Insert: {
                     comment?: string | null
                     created_at?: string
                     id?: string
-                    product_id?: string | null
-                    rating?: number | null
-                    user_id?: string | null
+                    product_id: string
+                    rating: number
+                    user_id: string
+                    order_id: string
                 }
                 Update: {
                     comment?: string | null
                     created_at?: string
                     id?: string
-                    product_id?: string | null
-                    rating?: number | null
-                    user_id?: string | null
+                    product_id?: string
+                    rating?: number
+                    user_id?: string
+                    order_id?: string
                 }
                 Relationships: [
                     {
@@ -218,6 +227,27 @@ export type Database = {
                         referencedColumns: ["id"]
                     },
                 ]
+            }
+            site_settings: {
+                Row: {
+                    id: string
+                    key: string
+                    value: any
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    key: string
+                    value: any
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    key: string
+                    value?: any
+                    updated_at?: string
+                }
+                Relationships: []
             }
         }
         Views: {

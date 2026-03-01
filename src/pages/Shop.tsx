@@ -13,6 +13,7 @@ interface Product {
     price: number;
     sale_price: number | null;
     images: string[] | null;
+    colors: string[] | null;
     category: {
         id: string;
         name: string;
@@ -48,10 +49,14 @@ export function Shop() {
         const query = searchParams.get('q');
         const min = searchParams.get('min');
         const max = searchParams.get('max');
+        const categoryParam = searchParams.get('category');
 
-        if (query) setSearchQuery(query);
-        if (min) setPriceRange(prev => [Number(min), prev[1]]);
-        if (max) setPriceRange(prev => [prev[0], Number(max)]);
+        setSearchQuery(query || '');
+        setPriceRange([
+            min ? Number(min) : 0,
+            max ? Number(max) : 10000000
+        ]);
+        setSelectedCategory(categoryParam || 'all');
     }, [searchParams]);
 
     const fetchCategories = async () => {
@@ -65,7 +70,8 @@ export function Shop() {
             .from('products')
             .select(`
         *,
-        category:categories(id, name)
+        category:categories(id, name),
+        colors
       `)
             .order('created_at', { ascending: false });
 
@@ -76,14 +82,20 @@ export function Shop() {
 
         const { data, error } = await query;
         if (error) console.error('Error fetching products:', error);
+
+        console.log("Fetched Products:", data); // DEBUG
         if (data) setProducts(data as any);
         setLoading(false);
     };
 
     const filteredProducts = products.filter(product => {
-        const matchesCategory = selectedCategory === 'all' || product.category?.id === selectedCategory;
+        // Handle nested category object or assume any existing string ID representation.
+        const productCategoryId = product.category?.id;
+
+        const matchesCategory = selectedCategory === 'all' || productCategoryId === selectedCategory;
         const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+
         return matchesCategory && matchesPrice && matchesSearch;
     });
 

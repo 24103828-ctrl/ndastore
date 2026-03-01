@@ -15,6 +15,7 @@ interface ProductCardProps {
         images?: string[] | null;
         image?: string; // Fallback for mock data
         category?: { name: string } | null;
+        colors?: string[] | null;
     };
     showRemoveButton?: boolean;
 }
@@ -41,6 +42,12 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
         e.preventDefault(); // Prevent navigating to product detail
         e.stopPropagation();
 
+        if (product.colors && product.colors.length > 0) {
+            showToast('Sản phẩm này có nhiều màu, vui lòng chọn màu bạn thích!', 'info');
+            navigate(`/product/${product.id}`);
+            return;
+        }
+
         addItem({
             id: String(product.id),
             name: product.name,
@@ -54,6 +61,12 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
     const handleBuyNow = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (product.colors && product.colors.length > 0) {
+            showToast('Vui lòng chọn màu trước khi thanh toán!', 'info');
+            navigate(`/product/${product.id}`);
+            return;
+        }
 
         addItem({
             id: String(product.id),
@@ -153,7 +166,7 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
             {/* Product Info */}
             <div className="p-4">
                 {product.category?.name && (
-                    <p className="text-xs text-gray-500 mb-1 tracking-wide uppercase">{product.category.name}</p>
+                    <p className="text-[10px] text-gray-500 mb-1 tracking-wide uppercase">{product.category.name}</p>
                 )}
                 <h3 className="text-sm font-bold font-serif text-gray-900 mb-1 line-clamp-2 group-hover:text-primary transition-colors">
                     <Link to={`/product/${product.id}`}>
@@ -163,11 +176,11 @@ export function ProductCard({ product, showRemoveButton }: ProductCardProps) {
                 <div className="flex items-center gap-2 mt-2">
                     {product.sale_price ? (
                         <>
-                            <span className="text-primary font-bold text-lg font-sans">{formatPrice(product.sale_price)}</span>
-                            <span className="text-gray-400 text-sm line-through font-sans">{formatPrice(product.price)}</span>
+                            <span className="text-primary font-bold text-base font-sans">{formatPrice(product.sale_price)}</span>
+                            <span className="text-gray-400 text-[11px] line-through font-sans">{formatPrice(product.price)}</span>
                         </>
                     ) : (
-                        <span className="text-primary font-bold text-lg font-sans">{formatPrice(product.price)}</span>
+                        <span className="text-primary font-bold text-base font-sans">{formatPrice(product.price)}</span>
                     )}
                 </div>
             </div>

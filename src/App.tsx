@@ -12,6 +12,7 @@ import { Account } from './pages/Account';
 import { Favorites } from './pages/Favorites';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { Policy } from './pages/Policy';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminRoute } from './components/admin/AdminRoute'; // [NEW]
 import { Dashboard } from './pages/admin/Dashboard';
@@ -21,11 +22,13 @@ import { Orders } from './pages/admin/Orders';
 import { Customers } from './pages/admin/Customers';
 import { CustomerBehavior } from './pages/admin/CustomerBehavior';
 import { FallingBlossoms } from './components/effects/FallingBlossoms';
+import { FakeOrderNotification } from './components/common/FakeOrderNotification';
 
 function App() {
   return (
     <Router>
       <FallingBlossoms />
+      <FakeOrderNotification />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
@@ -39,6 +42,7 @@ function App() {
         <Route path="/account" element={<Account />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/policy" element={<Policy />} />
 
         {/* Admin Routes */}
         {/* Admin Routes - Protected */}

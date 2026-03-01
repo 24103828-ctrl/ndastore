@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Package, User as UserIcon, LogOut, Copy } from 'lucide-react';
+import { Package, User as UserIcon, LogOut, Copy, Star } from 'lucide-react';
+import { ReviewModal } from '../components/product/ReviewModal';
 
 interface Order {
     id: string;
@@ -30,6 +31,8 @@ export function Account() {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
     const [showQR, setShowQR] = useState<string | null>(null);
+    const [userReviews, setUserReviews] = useState<any[]>([]);
+    const [selectedReviewItem, setSelectedReviewItem] = useState<{ product: any; orderId: string } | null>(null);
 
     useEffect(() => {
         if (!user) {
@@ -61,6 +64,14 @@ export function Account() {
                 .order('created_at', { ascending: false });
 
             if (ordersData) setOrders(ordersData as any);
+
+            // Fetch user reviews
+            const { data: reviewsData } = await supabase
+                .from('reviews')
+                .select('*')
+                .eq('user_id', user.id);
+
+            if (reviewsData) setUserReviews(reviewsData);
 
         } catch (error) {
             console.error('Error fetching account data:', error);
@@ -221,14 +232,33 @@ export function Account() {
                                                                         <p className="font-semibold text-stone-800 text-sm line-clamp-1">{item.product?.name}</p>
                                                                         <div className="flex items-center gap-2 mt-0.5">
                                                                             <span className="text-[11px] text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">x{item.quantity}</span>
-                                                                            {item.selected_color && (
-                                                                                <span className="text-[11px] text-primary font-bold bg-pink-50 px-1.5 py-0.5 rounded border border-primary/10">Màu: {item.selected_color}</span>
+                                                                            {item.color && (
+                                                                                <span className="text-[11px] text-primary font-bold bg-pink-50 px-1.5 py-0.5 rounded border border-primary/10">Màu: {item.color}</span>
                                                                             )}
                                                                             <span className="text-[11px] text-stone-400 font-medium">{formatPrice(item.price)} / sản phẩm</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <p className="font-bold text-stone-900 text-sm">{formatPrice(item.price * item.quantity)}</p>
+                                                                <div className="flex flex-col items-end gap-2">
+                                                                    <p className="font-bold text-stone-900 text-sm">{formatPrice(item.price * item.quantity)}</p>
+                                                                    {order.status === 'delivered' && (
+                                                                        userReviews.some(r => r.order_id === order.id && r.product_id === item.product_id) ? (
+                                                                            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                                                                <Star className="w-3 h-3 fill-current" /> Đã đánh giá
+                                                                            </span>
+                                                                        ) : (
+                                                                            <button
+                                                                                onClick={() => setSelectedReviewItem({
+                                                                                    product: { id: item.product_id, name: item.product?.name, image: item.product?.images?.[0] },
+                                                                                    orderId: order.id
+                                                                                })}
+                                                                                className="text-[10px] font-bold text-primary hover:text-white hover:bg-primary border border-primary px-2 py-1 rounded-full transition-all"
+                                                                            >
+                                                                                Đánh giá
+                                                                            </button>
+                                                                        )
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -330,6 +360,17 @@ export function Account() {
                     </div>
                 </div>
             </div>
+
+            {selectedReviewItem && user && (
+                <ReviewModal
+                    isOpen={!!selectedReviewItem}
+                    onClose={() => setSelectedReviewItem(null)}
+                    onSuccess={fetchData}
+                    product={selectedReviewItem.product}
+                    orderId={selectedReviewItem.orderId}
+                    userId={user.id}
+                />
+            )}
         </Layout>
     );
 }

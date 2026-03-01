@@ -151,7 +151,7 @@ export function Checkout() {
                 product_id: item.id,
                 quantity: item.quantity,
                 price: item.price,
-                selected_color: item.color
+                color: item.color
             }));
 
             const { error: itemsError } = await supabase
@@ -460,6 +460,7 @@ export function Checkout() {
                                                 <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded bg-gray-100" />
                                                 <div className="flex-1">
                                                     <p className="text-sm font-medium line-clamp-2">{item.name}</p>
+                                                    {item.color && <p className="text-xs text-primary font-medium">{item.color}</p>}
                                                     <p className="text-xs text-gray-500">x{item.quantity}</p>
                                                 </div>
                                                 <p className="text-sm font-bold">{formatPrice(item.price * item.quantity)}</p>

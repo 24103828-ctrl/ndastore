@@ -29,6 +29,10 @@ export function ProductForm() {
     const [images, setImages] = useState<string[]>([]);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
 
+    // Product Colors
+    const [colorInput, setColorInput] = useState('');
+    const [colors, setColors] = useState<string[]>([]);
+
     useEffect(() => {
         fetchCategories();
         if (id) {
@@ -53,6 +57,7 @@ export function ProductForm() {
                 stock: data.stock ? data.stock.toString() : '',
                 category_id: data.category_id || ''
             });
+            setColors(data.colors || []);
             // Ensure images is an array
             if (Array.isArray(data.images)) {
                 setImages(data.images);
@@ -63,6 +68,21 @@ export function ProductForm() {
         }
         setLoading(false);
     }
+
+    const handleAddColor = (e?: React.KeyboardEvent | React.MouseEvent) => {
+        if (e && 'key' in e && e.key !== 'Enter') return;
+        if (e) e.preventDefault();
+
+        const trimmed = colorInput.trim();
+        if (trimmed && !colors.includes(trimmed)) {
+            setColors([...colors, trimmed]);
+            setColorInput('');
+        }
+    };
+
+    const handleRemoveColor = (colorToRemove: string) => {
+        setColors(colors.filter(c => c !== colorToRemove));
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -153,7 +173,7 @@ export function ProductForm() {
             // Refinement: We should only include URLs that we intend to keep. 
             // But since we can't easily map back, we'll just concat.
             // The user wanted "Array format".
-            const finalImages = [...existingRemoteImages, ...newUploadedUrls];
+            const finalImages = [...existingRemoteImages, ...newUploadedUrls].filter(url => typeof url === 'string' && url.length > 0);
 
             const productData = {
                 name: formData.name,
@@ -162,7 +182,8 @@ export function ProductForm() {
                 sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
                 stock: parseInt(formData.stock) || 0,
                 category_id: formData.category_id || null,
-                images: finalImages
+                images: finalImages, // Ensure it's saved as an array [url]
+                colors: colors
             };
 
             const { error } = id
@@ -252,6 +273,42 @@ export function ProductForm() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
                                 placeholder="0"
                             />
+                        </div>
+
+                        <div className="col-span-2 md:col-span-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc (Tùy chọn)</label>
+                            <div className="flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    value={colorInput}
+                                    onChange={e => setColorInput(e.target.value)}
+                                    onKeyDown={handleAddColor}
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                                    placeholder="Nhập màu, vd: Đen..."
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddColor}
+                                    className="px-4 py-2 bg-pink-100 text-primary font-medium rounded-md hover:bg-pink-200 transition-colors"
+                                >
+                                    Thêm
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {colors.map(color => (
+                                    <div key={color} className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm">
+                                        <span>{color}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveColor(color)}
+                                            className="text-gray-500 hover:text-red-500 rounded-full"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {colors.length === 0 && <span className="text-xs text-gray-400">Chưa có màu nào được thêm.</span>}
+                            </div>
                         </div>
 
 

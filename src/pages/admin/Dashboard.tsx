@@ -1,6 +1,8 @@
 import { BarChart3, Package, ShoppingBag, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { cn } from '../../lib/utils';
 
 export function Dashboard() {
     const [stats, setStats] = useState({
@@ -9,6 +11,9 @@ export function Dashboard() {
         customers: 0,
         revenue: 0
     });
+    const [chartData, setChartData] = useState<any[]>([]);
+    const [fakeOrderSettings, setFakeOrderSettings] = useState({ enabled: true, interval: 30 });
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchStats();
@@ -32,12 +37,69 @@ export function Dashboard() {
 
         const revenue = revenueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
 
+        // 5. Chart Data (Last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const { data: recentOrders } = await supabase
+            .from('orders')
+            .select('created_at, total_amount')
+            .gte('created_at', sevenDaysAgo.toISOString())
+            .neq('status', 'cancelled');
+
+        const chartMap = new Map();
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            chartMap.set(dateStr, 0);
+        }
+
+        recentOrders?.forEach(order => {
+            const dateStr = new Date(order.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            if (chartMap.has(dateStr)) {
+                chartMap.set(dateStr, chartMap.get(dateStr) + (order.total_amount || 0));
+            }
+        });
+
+        const formattedChartData = Array.from(chartMap.entries())
+            .map(([name, amount]) => ({ name, amount }))
+            .reverse();
+
+        setChartData(formattedChartData);
+
         setStats({
             products: productsCount || 0,
             orders: ordersCount || 0,
             customers: customersCount || 0,
             revenue
         });
+
+        // 6. Fake Order Settings
+        const { data: settingsData } = await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('key', 'fake_order_settings')
+            .single();
+
+        if (settingsData) setFakeOrderSettings(settingsData.value);
+    };
+
+    const handleUpdateSettings = async (newSettings: any) => {
+        setIsSaving(true);
+        const { error } = await supabase
+            .from('site_settings')
+            .update({
+                key: 'fake_order_settings',
+                value: newSettings
+            } as any)
+            .eq('key', 'fake_order_settings');
+
+        if (!error) {
+            setFakeOrderSettings(newSettings);
+        }
+        setIsSaving(false);
     };
 
     const statCards = [
@@ -66,9 +128,94 @@ export function Dashboard() {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-lg font-bold mb-4">Hoạt động gần đây</h2>
-                <div className="h-64 flex items-center justify-center text-gray-400">
-                    Biểu đồ doanh thu (đang cập nhật)
+                <h2 className="text-lg font-bold mb-6">Doanh thu 7 ngày gần nhất</h2>
+                <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                            data={chartData}
+                            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 12, fill: '#9ca3af' }}
+                                dy={10}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 12, fill: '#9ca3af' }}
+                                tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                            />
+                            <Tooltip
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value: any) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), 'Doanh thu']}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="amount"
+                                stroke="#ec4899"
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill="url(#colorAmount)"
+                                animationDuration={2000}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Quick Settings */}
+            <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                <h2 className="text-lg font-bold mb-6">Cấu hình Website</h2>
+                <div className="max-w-md space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <h4 className="font-bold text-gray-800">Thông báo mua hàng giả lập</h4>
+                            <p className="text-sm text-gray-500">Hiển thị thông báo khách hàng vừa mua sản phẩm ở góc màn hình.</p>
+                        </div>
+                        <button
+                            onClick={() => handleUpdateSettings({ ...fakeOrderSettings, enabled: !fakeOrderSettings.enabled })}
+                            disabled={isSaving}
+                            className={cn(
+                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                fakeOrderSettings.enabled ? "bg-primary" : "bg-gray-200"
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                    fakeOrderSettings.enabled ? "translate-x-6" : "translate-x-1"
+                                )}
+                            />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <h4 className="font-bold text-gray-800">Tần suất hiển thị (giây)</h4>
+                            <p className="text-sm text-gray-500">Thời gian chờ giữa mỗi lần hiện thông báo.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                value={fakeOrderSettings.interval}
+                                onChange={(e) => handleUpdateSettings({ ...fakeOrderSettings, interval: parseInt(e.target.value) || 30 })}
+                                min="5"
+                                max="3600"
+                                className="w-20 px-3 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary text-center"
+                            />
+                            <span className="text-sm text-gray-500 font-medium">s</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart, Globe } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, X, Heart, Globe, ChevronDown } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -15,6 +16,7 @@ export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
     const { cartCount } = useCart();
     const { favoritesCount } = useFavorites();
     const { user, signOut } = useAuth();
@@ -27,6 +29,13 @@ export function Navbar() {
         };
 
         window.addEventListener('scroll', handleScroll);
+
+        const fetchCategories = async () => {
+            const { data } = await supabase.from('categories').select('*');
+            if (data) setCategories(data);
+        };
+        fetchCategories();
+
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -63,14 +72,34 @@ export function Navbar() {
                             <div className="ml-10 flex items-baseline space-x-10">
                                 {[
                                     { label: t('home'), path: '/' },
-                                    { label: t('shop'), path: '/shop' },
+                                    { label: t('shop'), path: '/shop', hasDropdown: true },
                                     { label: t('about'), path: '/about' },
                                     { label: t('contact'), path: '/contact' }
                                 ].map((item, index) => (
-                                    <Link key={index} to={item.path} className={linkBaseClass}>
-                                        {item.label}
-                                        {linkHoverEffect}
-                                    </Link>
+                                    <div key={index} className="relative group/nav z-50">
+                                        <Link to={item.path} className={cn(linkBaseClass, item.hasDropdown ? "flex items-center gap-1" : "")}>
+                                            {item.label}
+                                            {item.hasDropdown && <ChevronDown className="h-4 w-4 transition-transform group-hover/nav:-rotate-180" />}
+                                            {linkHoverEffect}
+                                        </Link>
+
+                                        {item.hasDropdown && categories.length > 0 && (
+                                            <div className="absolute left-0 top-[100%] pt-4 opacity-0 translate-y-2 pointer-events-none group-hover/nav:opacity-100 group-hover/nav:translate-y-0 group-hover/nav:pointer-events-auto transition-all duration-300">
+                                                <div className="bg-white rounded-xl shadow-xl border border-pink-100 py-2 w-56 flex flex-col overflow-hidden relative">
+                                                    <div className="absolute top-0 left-6 w-3 h-3 bg-white border-t border-l border-pink-100 transform -translate-y-1/2 rotate-45 z-[-1]" />
+                                                    {categories.map((cat) => (
+                                                        <Link
+                                                            key={cat.id}
+                                                            to={`/shop?category=${cat.id}`}
+                                                            className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-primary hover:bg-pink-50 transition-colors"
+                                                        >
+                                                            {cat.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>

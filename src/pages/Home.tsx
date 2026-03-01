@@ -15,6 +15,7 @@ interface Product {
     price: number;
     sale_price: number | null;
     images: string[] | null;
+    colors: string[] | null;
     category: { name: string } | null;
 }
 
@@ -32,7 +33,7 @@ export function Home() {
         // Fetch 4 newest products
         const { data } = await supabase
             .from('products')
-            .select('*, category:categories(name)')
+            .select('*, category:categories(name), colors')
             .order('created_at', { ascending: false })
             .limit(4);
 

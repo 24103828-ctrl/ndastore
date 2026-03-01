@@ -26,7 +26,7 @@ export function Favorites() {
         setLoading(true);
         const { data, error } = await supabase
             .from('products')
-            .select('*, category:categories(name)')
+            .select('*, category:categories(name), colors')
             .in('id', favorites);
 
         if (!error && data) {

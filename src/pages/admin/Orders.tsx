@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { ChevronDown, ChevronUp, Trash2, User, Mail, Phone, MapPin, Package } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, User, Mail, Phone, MapPin, Package, Star } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface Order {
     id: string;
@@ -26,7 +27,7 @@ export function Orders() {
 
         // Realtime subscription
         const channel = supabase
-            .channel('public:orders')
+            .channel('admin:updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
                 console.log('Realtime order update:', payload);
                 if (payload.eventType === 'DELETE') {
@@ -34,6 +35,10 @@ export function Orders() {
                 } else {
                     fetchOrders();
                 }
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, (payload) => {
+                console.log('Realtime review update:', payload);
+                fetchOrders(); // Refresh to get reviews
             })
             .subscribe();
 
@@ -47,7 +52,7 @@ export function Orders() {
         console.log('Fetching orders...');
         const { data, error } = await supabase
             .from('orders')
-            .select('*, profiles(email), items:order_items(*, product:products(name, images))')
+            .select('*, profiles(email), items:order_items(*, product:products(name, images)), reviews(*)')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -202,8 +207,8 @@ export function Orders() {
                                                                     <div className="flex flex-col">
                                                                         <span className="text-sm font-bold text-gray-900">{item.product?.name}</span>
                                                                         <span className="text-xs text-gray-500">Số lượng: {item.quantity}</span>
-                                                                        {item.selected_color && (
-                                                                            <span className="text-[10px] text-primary font-bold bg-pink-50 px-1.5 py-0.5 rounded w-fit mt-1 border border-primary/10">Màu: {item.selected_color}</span>
+                                                                        {item.color && (
+                                                                            <span className="text-[10px] text-primary font-bold bg-pink-50 px-1.5 py-0.5 rounded w-fit mt-1 border border-primary/10">Màu: {item.color}</span>
                                                                         )}
                                                                     </div>
                                                                 </div>
@@ -268,6 +273,46 @@ export function Orders() {
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {/* Reviews Header & Content */}
+                                                {(order as any).reviews && (order as any).reviews.length > 0 && (
+                                                    <div className="md:col-span-2 mt-4 pt-6 border-t border-gray-200">
+                                                        <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                                            Đánh giá của khách hàng
+                                                        </h4>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                            {(order as any).reviews.map((review: any) => (
+                                                                <div key={review.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <div className="flex gap-0.5">
+                                                                            {[1, 2, 3, 4, 5].map((s) => (
+                                                                                <Star
+                                                                                    key={s}
+                                                                                    className={cn(
+                                                                                        "w-3 h-3",
+                                                                                        s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"
+                                                                                    )}
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                        <span className="text-[10px] text-gray-400">
+                                                                            {new Date(review.created_at).toLocaleDateString('vi-VN')}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-xs text-gray-700 italic">"{review.comment || 'Không có bình luận.'}"</p>
+                                                                    {/* Link review to product */}
+                                                                    {order.items?.find((item: any) => item.product_id === review.product_id) && (
+                                                                        <p className="text-[10px] text-primary mt-2 flex items-center gap-1 font-bold">
+                                                                            <Package className="w-2 h-2" />
+                                                                            {order.items.find((item: any) => item.product_id === review.product_id)?.product?.name}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
