@@ -6,7 +6,7 @@ import { ProductCard } from '../components/product/ProductCard';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 
-import bghoadao from '../image/bghoadao.png';
+import bghoadao from '../image/nen2.jpg';
 
 // Helper interface if not imported
 interface Product {
