@@ -23,12 +23,14 @@ import { Customers } from './pages/admin/Customers';
 import { CustomerBehavior } from './pages/admin/CustomerBehavior';
 import { FallingBlossoms } from './components/effects/FallingBlossoms';
 import { FakeOrderNotification } from './components/common/FakeOrderNotification';
+import { XinhBot } from './components/common/XinhBot';
 
 function App() {
   return (
     <Router>
       <FallingBlossoms />
       <FakeOrderNotification />
+      <XinhBot />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
