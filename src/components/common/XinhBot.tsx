@@ -253,7 +253,7 @@ export function XinhBot() {
         }
 
         // --- YÊU CẦU 3: LOGIC ANIMATION TOOLTIP ---
-        let tooltipInterval: NodeJS.Timeout;
+        let tooltipInterval: ReturnType<typeof setInterval>;
 
         const animateTooltip = () => {
             if (tooltipEl) {
