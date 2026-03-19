@@ -7,7 +7,8 @@ export function XinhBot() {
     const chatInitialized = useRef(false);
 
     useEffect(() => {
-        // LUÔN LUÔN CHẠY: KHÔNG ĐƯỢC return !user Ở ĐÂY ĐỂ TRÁNH MẤT NÚT CHAT
+        // CHỈ CHẠY KHI CÓ USER: Nếu không có user (chưa đăng nhập), dọn dẹp và kết thúc sớm
+        if (!user) return;
         
         // Container DOM cho chatbot
         const CHAT_TARGET_ID = 'xinhbot-container';
@@ -73,69 +74,6 @@ export function XinhBot() {
                 /* XÓA HOÀN TOÀN CHỮ "Powered by n8n" TẠI FOOTER */
                 .chat-powered-by {
                     display: none !important;
-                }
-
-                /* YÊU CẦU MỚI: BẢNG SẢN PHẨM SHOPEE CARD STYLE */
-                .chat-message-markdown table {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    width: 100% !important;
-                    border: none !important;
-                    gap: 12px !important;
-                    background: transparent !important;
-                }
-                .chat-message-markdown thead {
-                    display: none !important;
-                }
-                .chat-message-markdown tbody {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 10px !important;
-                    width: 100% !important;
-                }
-                .chat-message-markdown tr {
-                    display: flex !important;
-                    flex-direction: row !important;
-                    align-items: center !important;
-                    background: #ffffff !important;
-                    border-radius: 12px !important;
-                    padding: 10px !important;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
-                    border: 1px solid #f0f0f0 !important;
-                    margin: 0 !important;
-                    transition: transform 0.2s ease;
-                }
-                .chat-message-markdown tr:hover {
-                    transform: translateY(-2px);
-                }
-                .chat-message-markdown td {
-                    border: none !important;
-                    padding: 0 !important;
-                }
-                .chat-message-markdown td:first-child {
-                    width: 85px !important;
-                    max-width: 85px !important;
-                    flex-shrink: 0 !important;
-                    margin-right: 12px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                }
-                .chat-message-markdown td:first-child img {
-                    width: 100% !important;
-                    height: 85px !important;
-                    border-radius: 8px !important;
-                    object-fit: cover !important;
-                    display: block !important;
-                }
-                .chat-message-markdown td:nth-child(2) {
-                    flex: 1 !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    font-size: 13px !important;
-                    color: #333333 !important;
-                    line-height: 1.4 !important;
-                    word-break: break-word !important;
                 }
 
                 /* YÊU CẦU 3 Kế thừa: Tooltip bong bóng thoát CSS */
@@ -209,16 +147,9 @@ export function XinhBot() {
 
         // Hàm Config & Khởi tạo Chatbot n8n
         const initChat = () => {
-            if ((window as any).createN8nChat && !chatInitialized.current) {
-                // Sử dụng guest-id nếu chưa đăng nhập để luôn hiện chatbot
-                let sessionId = user?.id;
-                if (!sessionId) {
-                    sessionId = localStorage.getItem('xinhbot-guest-id') || '';
-                    if (!sessionId) {
-                        sessionId = 'guest-' + Math.random().toString(36).substring(2, 9);
-                        localStorage.setItem('xinhbot-guest-id', sessionId);
-                    }
-                }
+            if ((window as any).createN8nChat && !chatInitialized.current && user) {
+                // Chỉ dùng user.id, bỏ guest-id logic
+                const sessionId = user.id;
 
                 (window as any).createN8nChat({
                     webhookUrl: 'https://phamhuucuong231.app.n8n.cloud/webhook/004eb129-66fb-431c-9f64-2fa8df0954dd/chat',
@@ -229,14 +160,12 @@ export function XinhBot() {
                         'Xin chào! Mình là XINHBOT 🌸',
                         'Mình có thể giúp gì cho bạn hôm nay?'
                     ],
-                    // YÊU CẦU 1: Xử lý lỗi n8n bằng i18n
                     i18n: {
                         en: {
                             title: 'XINHBOT',
                             subtitle: 'Hỗ trợ trực tuyến',
                             getStarted: 'Bắt đầu chat',
                             inputPlaceholder: 'Nhập tin nhắn...',
-                            // Đổi thông báo lỗi thành câu vui vẻ
                             error: 'Hệ thống đang quá tải hãy đợi chút nha! 😭',
                             serverError: 'Hệ thống đang quá tải hãy đợi chút nha! 😭',
                             networkError: 'Hệ thống đang quá tải hãy đợi chút nha! 😭',
@@ -249,8 +178,8 @@ export function XinhBot() {
                     },
                     metadata: {
                         user_id: sessionId, 
-                        email: user?.email || 'guest@ndastore.vn',
-                        fullName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Khách hàng'
+                        email: user.email || 'user@ndastore.vn',
+                        fullName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Khách hàng'
                     }
                 });
                 chatInitialized.current = true;
@@ -297,18 +226,17 @@ export function XinhBot() {
             overlay.querySelector('#xbtn-yes')?.addEventListener('click', async () => {
                 try {
                     close();
-                    const sessionId = user?.id || localStorage.getItem('xinhbot-guest-id');
-                    if (!sessionId) return;
+                    if (!user) return;
 
                     // 1. Xóa trên Supabase
                     const { error } = await supabase
                         .from('n8n_chat_histories')
                         .delete()
-                        .eq('session_id', sessionId);
+                        .eq('session_id', user.id);
                     
                     if (error) throw error;
 
-                    // 2. Xóa trên UI (Reload là cách sạch nhất để reset n8n widget)
+                    // 2. Xóa trên UI
                     localStorage.removeItem('n8n-chat-session');
                     window.location.reload();
                 } catch (err) {
@@ -318,16 +246,12 @@ export function XinhBot() {
             });
         };
 
-        // --- YÊU CẦU 3: LOGIC ANIMATION TOOLTIP ---
+        // --- TOOLTIP ANIMATION LOGIC ---
         let tooltipInterval: any;
-
         const animateTooltip = () => {
             if (tooltipEl) {
-                // Bước 1: Hiện tooltip lên và bắt đầu rung
                 tooltipEl.style.opacity = '1';
                 tooltipEl.classList.add('shake-animation');
-                
-                // Bước 2: Sau 3 giây, mờ đi và dừng rung
                 setTimeout(() => {
                     if (tooltipEl) {
                         tooltipEl.style.opacity = '0';
@@ -337,35 +261,24 @@ export function XinhBot() {
             }
         };
 
-        // Bật ngay tooltip lần đầu tiên sau khi load trang (delay 1s)
         setTimeout(animateTooltip, 1000);
-
-        // Lặp lại chu kỳ cứ mỗi 15 giây
         tooltipInterval = setInterval(animateTooltip, 15000);
 
-        // --- YÊU CẦU MỚI: HACK SHADOW DOM ĐỂ XÓA HARDCODE LỖI NHẬN TIN NHẮN ---
-        // Sử dụng đệ quy để tìm Text Node ở mọi ngóc ngách, bao gồm cả các phần tử bị bọc bởi shadowRoot.
+        // --- HACK SHADOW DOM ĐỂ CUSTOM UI ---
         const EXPECTED_ERROR_TEXT = "Error: Failed to receive response";
         const CUSTOM_ERROR_TEXT = "Hệ thống đang quá tải hãy đợi chút nha! 😭";
-
         let isChatWindowOpen = false;
 
         const processShadowDOM = (node: Node) => {
             if (!node) return;
-            
-            // 1. Phá Shadow DOM để chọc vào trong bằng đệ quy
             if ((node as Element).shadowRoot) {
                 processShadowDOM((node as Element).shadowRoot as any as Node);
             }
-
-            // 2. Xóa lỗi hardcode
-            if (node.nodeType === 3) { // 3 là Node.TEXT_NODE
+            if (node.nodeType === 3) {
                 if (node.nodeValue && node.nodeValue.includes(EXPECTED_ERROR_TEXT)) {
                     node.nodeValue = node.nodeValue.replace(EXPECTED_ERROR_TEXT, CUSTOM_ERROR_TEXT);
                 }
             } 
-            
-            // 3. Theo dõi trạng thái bật tắt của Khung Chat window
             if (node.nodeType === 1 && (node as Element).classList) {
                 const el = node as HTMLElement;
                 if (el.classList.contains('chat-window')) {
@@ -374,8 +287,6 @@ export function XinhBot() {
                         isChatWindowOpen = true;
                     }
                 }
-
-                // --- INJECT NÚT LÀM MỚI VÀO HEADER ---
                 if (el.classList.contains('chat-header')) {
                     if (!el.querySelector('.xinhbot-refresh-btn')) {
                         const refreshBtn = document.createElement('button');
@@ -394,8 +305,6 @@ export function XinhBot() {
                     }
                 }
             }
-
-            // 4. Quét đệ quy con
             const children = node.childNodes;
             for (let i = 0; i < children.length; i++) {
                 processShadowDOM(children[i]);
@@ -406,29 +315,34 @@ export function XinhBot() {
             isChatWindowOpen = false;
             const chatWrapper = document.getElementById(CHAT_TARGET_ID) || document.body;
             processShadowDOM(chatWrapper);
-
-            // Ẩn/Hiện Tooltip logic
             if (tooltipEl) {
                 if (isChatWindowOpen) {
-                    // Chat đang mở -> Tắt tooltip hoàn toàn
                     tooltipEl.style.opacity = '0';
                     tooltipEl.style.pointerEvents = 'none';
                 } else {
-                    // Chat đóng -> Trả lại chức năng (opacity mờ hiện do interval gốc kiểm soát)
                     tooltipEl.style.pointerEvents = 'auto';
                 }
             }
         }, 400);
 
-        // Hủy Chatbot và Tooltip nếu người dùng đăng xuất (Unmount component)
+        // CLEANUP: Chạy khi component unmount HOẶC khi user thay đổi (đăng xuất)
         return () => {
             window.removeEventListener('n8n-chat-loaded', initChat);
-            clearInterval(tooltipInterval); // Dọn dẹp bộ đếm rung
-            clearInterval(shadowDomInterval); // Dọn dẹp bộ đếm quét lỗi
+            clearInterval(tooltipInterval);
+            clearInterval(shadowDomInterval);
+            
+            // Xóa tất cả các element UI chatbot khỏi màn hình
             if (chatContainer) chatContainer.remove(); 
-            if (tooltipEl) tooltipEl.remove(); // Gỡ tooltip khỏi DOM
+            if (tooltipEl) tooltipEl.remove();
+            
+            const confirmModal = document.getElementById('xinhbot-confirm-modal');
+            if (confirmModal) confirmModal.remove();
+
+            chatInitialized.current = false;
         };
-    }, [user?.id]); // Re-run if user ID changes, but don't return null if missing
+    }, [user]); // Theo dõi user để tự động hiện/ẩn
+
+    if (!user) return null;
 
     return null;
 }
