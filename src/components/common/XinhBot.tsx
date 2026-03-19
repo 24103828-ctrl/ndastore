@@ -5,15 +5,28 @@ import { supabase } from '../../lib/supabase';
 
 /**
  * XinhBot - Strict Header Design + Persistent State
- * - Fixed Header: 60px, Centered 'XINHBOT', Refresh Icon
- * - Simple Custom Refresh Modal
- * - Persistent React State + LocalStorage + Supabase preserved
+ * - Sync Auth State
+ * - Fixed Header: 60px, Centered 'XINHBOT', 🔄 Refresh Icon
+ * - Login Modal & Fetch logic preserved
  */
 export function XinhBot() {
     const { user } = useAuth();
     const navigate = useNavigate();
     
-    const STORAGE_KEY = user?.id ? `chat_history_${user.id}` : 'chat_history_guest';
+    // 1. NGAY LẬP TỨC UPDATE USER.ID TỪ AUTH STATE CHANGE CHUYÊN CHO CHATBOT
+    const [currentUserId, setCurrentUserId] = useState<string | null>(user?.id || null);
+    const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(user?.email || null);
+
+    useEffect(() => {
+        // Lắng nghe auth để tài khoản mới tạo (hoặc login) nhận ngay ID Session
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setCurrentUserId(session?.user?.id || null);
+            setCurrentUserEmail(session?.user?.email || null);
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const STORAGE_KEY = currentUserId ? `chat_history_${currentUserId}` : 'chat_history_guest';
     
     // --- STATE BỀN VỮNG ---
     const [messages, setMessages] = useState<any[]>(() => {
@@ -26,6 +39,7 @@ export function XinhBot() {
     });
 
     const chatInitialized = useRef(false);
+    const initializedSessionId = useRef<string | null>(null);
     const chatInstance = useRef<any>(null);
 
     // Lưu cache nhanh chóng
@@ -36,7 +50,7 @@ export function XinhBot() {
     }, [messages, STORAGE_KEY]);
 
     useEffect(() => {
-        if (user) {
+        if (currentUserId) {
             localStorage.removeItem('n8n-chat-session');
         }
 
@@ -87,7 +101,8 @@ export function XinhBot() {
                     color: white !important;
                     text-transform: uppercase !important;
                     text-align: center !important;
-                    margin: 0 !important;
+                    margin: 0 auto !important;
+                    flex: 1 !important;
                 }
                 .chat-header-subtitle { display: none !important; }
                 .chat-powered-by { display: none !important; }
@@ -108,6 +123,10 @@ export function XinhBot() {
                     50% { transform: translateX(5px) rotate(3deg); }
                     75% { transform: translateX(-5px) rotate(-3deg); }
                     100% { transform: translateX(0); }
+                }
+
+                .xinhbot-refresh-btn:hover {
+                    opacity: 0.8;
                 }
             `;
             document.head.appendChild(styleEl);
@@ -131,13 +150,13 @@ export function XinhBot() {
             }
         };
 
-        const fetchHistoryFromSupabase = async () => {
-            if (!user?.id) return;
+        const fetchHistoryFromSupabase = async (userId: string) => {
+            if (!userId) return;
             try {
                 const { data, error } = await supabase
                     .from('n8n_chat_histories')
                     .select('message')
-                    .eq('session_id', user.id)
+                    .eq('session_id', userId)
                     .order('id', { ascending: true });
                 if (error) throw error;
                 if (data) {
@@ -148,7 +167,11 @@ export function XinhBot() {
         };
 
         // Ràng buộc bảo vệ tuyệt đối: Logic fetch lịch sử khi chuyển tab
-        const handleVisibilityChange = () => { if (document.visibilityState === 'visible' && user?.id) fetchHistoryFromSupabase(); };
+        const handleVisibilityChange = () => { 
+            if (document.visibilityState === 'visible' && currentUserId) {
+                fetchHistoryFromSupabase(currentUserId);
+            }
+        };
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         // LOGIN MODAL
@@ -173,27 +196,60 @@ export function XinhBot() {
         };
 
         const handleInteractionCatch = (e: MouseEvent) => {
-            if (!user) {
+            if (!currentUserId) {
                 const container = document.getElementById(CHAT_TARGET_ID);
                 if (container && container.contains(e.target as Node)) { e.preventDefault(); e.stopPropagation(); showLoginModal(); }
             }
         };
         document.addEventListener('click', handleInteractionCatch, true);
 
-        // INITIALIZE CHAT
+        // INITIALIZE OR RE-INITIALIZE CHAT
         const initChat = () => {
-            if ((window as any).createN8nChat && !chatInitialized.current) {
-                const sid = user?.id || 'guest-session';
+            if (!(window as any).createN8nChat) return;
+            
+            const sid = currentUserId || 'guest-session';
+            
+            // 2. NẾU USER CẬP NHẬT TỪ NULL -> ID HOẶC ID MỚI TRONG SESSION NÀY
+            if (chatInitialized.current && initializedSessionId.current !== sid) {
+                // Hủy instance cũ bằng cách clear container
+                const container = document.getElementById('xinhbot-container');
+                if (container) container.innerHTML = '';
+                chatInitialized.current = false;
+            }
+
+            if (!chatInitialized.current) {
                 chatInstance.current = (window as any).createN8nChat({
                     webhookUrl: 'https://phamhuucuong231.app.n8n.cloud/webhook/004eb129-66fb-431c-9f64-2fa8df0954dd/chat',
-                    target: '#xinhbot-container', mode: 'window', showWelcomeScreen: true,
+                    target: '#xinhbot-container', 
+                    mode: 'window', 
+                    showWelcomeScreen: false, // 3. Tắt màn hình "Start a chat..."
                     initialMessages: ['Xin chào! Mình là XINHBOT 🌸', 'Mình có thể giúp gì cho bạn hôm nay?'],
-                    metadata: { user_id: sid, email: user?.email || 'guest@ndastore.vn' },
-                    i18n: { en: { title: 'XINHBOT', subtitle: '', inputPlaceholder: 'Nhập tin nhắn...' } }
+                    metadata: { user_id: sid, email: currentUserEmail || 'guest@ndastore.vn' },
+                    i18n: { 
+                        en: { 
+                            title: 'XINHBOT', 
+                            subtitle: '', 
+                            inputPlaceholder: 'Nhập tin nhắn...' 
+                        } 
+                    }
                 });
                 chatInitialized.current = true;
-                if (messages.length > 0) setTimeout(() => syncToWidget(messages), 800);
-                if (user?.id) fetchHistoryFromSupabase();
+                initializedSessionId.current = sid;
+                
+                // Đồng bộ từ local cache mượt mà
+                const cacheForSid = localStorage.getItem(`chat_history_${sid}`);
+                if (cacheForSid) {
+                    const parsed = JSON.parse(cacheForSid);
+                    setMessages(parsed);
+                    setTimeout(() => syncToWidget(parsed), 800);
+                } else if (messages.length > 0) {
+                    setTimeout(() => syncToWidget(messages), 800);
+                }
+
+                // Nếu là full_user thì sync DB
+                if (currentUserId) {
+                    fetchHistoryFromSupabase(currentUserId);
+                }
             }
         };
 
@@ -224,8 +280,8 @@ export function XinhBot() {
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
             
             overlay.querySelector('#xbtn-yes')?.addEventListener('click', async () => {
-                if (user?.id) {
-                    await supabase.from('n8n_chat_histories').delete().eq('session_id', user.id);
+                if (currentUserId) {
+                    await supabase.from('n8n_chat_histories').delete().eq('session_id', currentUserId);
                     localStorage.removeItem(STORAGE_KEY);
                     localStorage.removeItem('n8n-chat-session');
                     setMessages([]); 
@@ -251,7 +307,8 @@ export function XinhBot() {
                 
                 if (el.classList.contains('chat-header')) {
                     const titleEl = el.querySelector('.chat-header-title');
-                    if (titleEl) {
+                    // Ghi đè chữ XINHBOT bất chấp DOM update
+                    if (titleEl && titleEl.textContent !== 'XINHBOT') {
                         titleEl.textContent = 'XINHBOT';
                     }
                     const subEl = el.querySelector('.chat-header-subtitle') as HTMLElement;
@@ -264,17 +321,26 @@ export function XinhBot() {
                         closeBtn.style.right = '15px';
                     }
 
-                    // Thêm nút refresh
+                    // Tích hợp Icon Làm mới 🔄
                     if (!el.querySelector('.xinhbot-refresh-btn')) {
                         const btn = document.createElement('button'); btn.className = 'xinhbot-refresh-btn';
-                        btn.style.cssText = 'position:absolute; right:55px; background:none;border:none;color:white;cursor:pointer;padding:8px;display:flex;align-items:center;transition:transform 0.2s;';
-                        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
-                        btn.onmouseover = () => { btn.style.transform = 'rotate(30deg)'; };
-                        btn.onmouseout = () => { btn.style.transform = 'rotate(0deg)'; };
-                        btn.onclick = (e) => { e.stopPropagation(); showClearConfirmModal(); };
+                        btn.style.cssText = 'position:absolute; right:55px; background:none;border:none;color:white;cursor:pointer;padding:8px;display:flex;align-items:center;font-size:22px;transition:transform 0.2s;';
+                        btn.innerHTML = '🔄'; 
+                        btn.title = 'Làm mới đoạn chat';
+                        btn.onmouseover = () => { btn.style.transform = 'rotate(30deg) scale(1.1)'; };
+                        btn.onmouseout = () => { btn.style.transform = 'rotate(0deg) scale(1)'; };
+                        btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); showClearConfirmModal(); };
                         el.appendChild(btn);
                     }
                 }
+
+                // Ẩn các đoạn chữ "Start a chat..." rác nếu còn sót
+                const headings = el.querySelectorAll('h1, h2, h3, p');
+                headings.forEach(h => {
+                    if (h.textContent?.includes('Start a chat')) {
+                        (h as HTMLElement).style.display = 'none';
+                    }
+                });
             }
             node.childNodes.forEach(scanSD);
         };
@@ -293,7 +359,8 @@ export function XinhBot() {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             clearInterval(ttIv); clearInterval(sdIv); clearInterval(syncIv); clearTimeout(redirectTimeout);
         };
-    }, [user, navigate, messages.length, STORAGE_KEY]);
+    }, [currentUserId, currentUserEmail, navigate, messages.length, STORAGE_KEY]);
 
     return null;
 }
+
