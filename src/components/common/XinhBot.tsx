@@ -7,10 +7,10 @@ export function XinhBot() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const chatInitialized = useRef(false);
+    const chatInstance = useRef<any>(null); // Lưu trữ instance của chat widget
 
     useEffect(() => {
-        // LUÔN LUÔN CHẠY: Để hiện nút chat cho cả khách vãng lai
-        
+        // Container DOM cho chatbot
         const CHAT_TARGET_ID = 'xinhbot-container';
         let chatContainer = document.getElementById(CHAT_TARGET_ID);
 
@@ -20,6 +20,7 @@ export function XinhBot() {
             document.body.appendChild(chatContainer);
         }
 
+        // Tạo Tooltip gọi khách hàng
         const TOOLTIP_ID = 'xinhbot-tooltip';
         let tooltipEl = document.getElementById(TOOLTIP_ID);
 
@@ -30,6 +31,7 @@ export function XinhBot() {
             document.body.appendChild(tooltipEl);
         }
 
+        // Tạo style override
         const STYLE_ID = 'xinhbot-custom-style';
         if (!document.getElementById(STYLE_ID)) {
             const styleEl = document.createElement('style');
@@ -117,7 +119,35 @@ export function XinhBot() {
             document.head.appendChild(script);
         }
 
-        // --- MODAL THÔNG BÁO LOGIN (UX MỚI) ---
+        // --- FETCH LỊCH SỬ TỪ SUPABASE (MỚI) ---
+        const fetchHistory = async () => {
+            if (!user || !chatInstance.current) return;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('n8n_chat_histories')
+                    .select('message')
+                    .eq('session_id', user.id)
+                    .order('id', { ascending: true });
+
+                if (error) {
+                    console.error('Lỗi khi tải lịch sử chat:', error.message);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    const messages = data.map(d => d.message);
+                    // Sử dụng setMessages của widget để hiển thị lịch sử
+                    if (typeof chatInstance.current.setMessages === 'function') {
+                        chatInstance.current.setMessages(messages);
+                    }
+                }
+            } catch (err) {
+                console.error('Lỗi ngoại lệ khi tải lịch sử chat:', err);
+            }
+        };
+
+        // --- MODAL THÔNG BÁO LOGIN (MỜI ĐĂNG NHẬP) ---
         let redirectTimeout: any;
         const showLoginModal = () => {
             const MODAL_ID = 'xinhbot-login-modal';
@@ -155,7 +185,7 @@ export function XinhBot() {
             redirectTimeout = setTimeout(goToLogin, 2500);
         };
 
-        // --- HIJACK CLICK CHO KHÁCH VÃNG LAI (CAPTURING) ---
+        // --- HIJACK CLICK CHO KHÁCH VÃNG LAI ---
         const handleInteractionCatch = (e: MouseEvent) => {
             if (!user) {
                 const container = document.getElementById(CHAT_TARGET_ID);
@@ -168,11 +198,11 @@ export function XinhBot() {
         };
         document.addEventListener('click', handleInteractionCatch, true);
 
-        const initChat = () => {
+        const initChat = async () => {
             if ((window as any).createN8nChat && !chatInitialized.current) {
                 const sessionId = user?.id || 'guest-session-placeholder';
 
-                (window as any).createN8nChat({
+                chatInstance.current = (window as any).createN8nChat({
                     webhookUrl: 'https://phamhuucuong231.app.n8n.cloud/webhook/004eb129-66fb-431c-9f64-2fa8df0954dd/chat',
                     target: '#xinhbot-container',
                     mode: 'window',
@@ -204,6 +234,11 @@ export function XinhBot() {
                     }
                 });
                 chatInitialized.current = true;
+                
+                // Sau khi init, tải lịch sử ngay
+                if (user) {
+                    await fetchHistory();
+                }
             }
         };
 
@@ -321,6 +356,7 @@ export function XinhBot() {
             const confirmModal = document.getElementById('xinhbot-confirm-modal');
             if (confirmModal) confirmModal.remove();
             chatInitialized.current = false;
+            chatInstance.current = null;
         };
     }, [user, navigate]);
 
