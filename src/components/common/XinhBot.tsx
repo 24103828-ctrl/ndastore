@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export function XinhBot() {
     const { user } = useAuth(); // Lấy thông tin user hiện tại từ hệ thống đăng nhập
+    const chatInitialized = useRef(false);
 
     useEffect(() => {
-        // KIỂM TRA ĐĂNG NHẬP: CHỈ LOAD NẾU USER HỢP LỆ
-        if (!user) return;
-
+        // LUÔN LUÔN CHẠY: KHÔNG ĐƯỢC return !user Ở ĐÂY ĐỂ TRÁNH MẤT NÚT CHAT
+        
         // Container DOM cho chatbot
         const CHAT_TARGET_ID = 'xinhbot-container';
         let chatContainer = document.getElementById(CHAT_TARGET_ID);
@@ -208,7 +209,17 @@ export function XinhBot() {
 
         // Hàm Config & Khởi tạo Chatbot n8n
         const initChat = () => {
-            if ((window as any).createN8nChat) {
+            if ((window as any).createN8nChat && !chatInitialized.current) {
+                // Sử dụng guest-id nếu chưa đăng nhập để luôn hiện chatbot
+                let sessionId = user?.id;
+                if (!sessionId) {
+                    sessionId = localStorage.getItem('xinhbot-guest-id') || '';
+                    if (!sessionId) {
+                        sessionId = 'guest-' + Math.random().toString(36).substring(2, 9);
+                        localStorage.setItem('xinhbot-guest-id', sessionId);
+                    }
+                }
+
                 (window as any).createN8nChat({
                     webhookUrl: 'https://phamhuucuong231.app.n8n.cloud/webhook/004eb129-66fb-431c-9f64-2fa8df0954dd/chat',
                     target: '#xinhbot-container',
@@ -237,11 +248,12 @@ export function XinhBot() {
                         }
                     },
                     metadata: {
-                        user_id: user.id, // NHÉT KHÓA user_id LIÊN KẾT ĐẾN WEB
-                        email: user.email,
-                        fullName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Khách'
+                        user_id: sessionId, 
+                        email: user?.email || 'guest@ndastore.vn',
+                        fullName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Khách hàng'
                     }
                 });
+                chatInitialized.current = true;
             }
         };
 
@@ -252,8 +264,62 @@ export function XinhBot() {
             window.addEventListener('n8n-chat-loaded', initChat);
         }
 
+        // --- LOGIC XÓA LỊCH SỬ ---
+        const showClearConfirmModal = () => {
+            const MODAL_ID = 'xinhbot-confirm-modal';
+            if (document.getElementById(MODAL_ID)) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = MODAL_ID;
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;';
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'background:white;padding:24px;border-radius:16px;text-align:center;width:300px;box-shadow:0 10px 25px rgba(0,0,0,0.1);border:2px solid #FFB7C5;';
+            modal.innerHTML = `
+                <h3 style="margin-bottom:20px;font-size:16px;color:#333;">Bạn muốn làm mới cuộc trò chuyện?</h3>
+                <div style="display:flex;gap:12px;justify-content:center;">
+                    <button id="xbtn-no" style="padding:8px 20px;border-radius:10px;border:1px solid #ddd;background:white;cursor:pointer;font-weight:500;">Hủy</button>
+                    <button id="xbtn-yes" style="padding:8px 20px;border-radius:10px;border:none;background:linear-gradient(135deg, #FFB7C5, #FF69B4);color:white;cursor:pointer;font-weight:600;">Đồng ý</button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            requestAnimationFrame(() => overlay.style.opacity = '1');
+
+            const close = () => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 200);
+            };
+
+            overlay.querySelector('#xbtn-no')?.addEventListener('click', close);
+            overlay.querySelector('#xbtn-yes')?.addEventListener('click', async () => {
+                try {
+                    close();
+                    const sessionId = user?.id || localStorage.getItem('xinhbot-guest-id');
+                    if (!sessionId) return;
+
+                    // 1. Xóa trên Supabase
+                    const { error } = await supabase
+                        .from('n8n_chat_histories')
+                        .delete()
+                        .eq('session_id', sessionId);
+                    
+                    if (error) throw error;
+
+                    // 2. Xóa trên UI (Reload là cách sạch nhất để reset n8n widget)
+                    localStorage.removeItem('n8n-chat-session');
+                    window.location.reload();
+                } catch (err) {
+                    console.error('Lỗi khi xóa lịch sử:', err);
+                    alert('Có lỗi xảy ra khi xóa lịch sử. Vui lòng thử lại!');
+                }
+            });
+        };
+
         // --- YÊU CẦU 3: LOGIC ANIMATION TOOLTIP ---
-        let tooltipInterval: ReturnType<typeof setInterval>;
+        let tooltipInterval: any;
 
         const animateTooltip = () => {
             if (tooltipEl) {
@@ -301,10 +367,30 @@ export function XinhBot() {
             
             // 3. Theo dõi trạng thái bật tắt của Khung Chat window
             if (node.nodeType === 1 && (node as Element).classList) {
-                if ((node as Element).classList.contains('chat-window')) {
-                    const computedStyle = window.getComputedStyle(node as Element);
+                const el = node as HTMLElement;
+                if (el.classList.contains('chat-window')) {
+                    const computedStyle = window.getComputedStyle(el);
                     if (computedStyle.display !== 'none' && computedStyle.opacity !== '0') {
                         isChatWindowOpen = true;
+                    }
+                }
+
+                // --- INJECT NÚT LÀM MỚI VÀO HEADER ---
+                if (el.classList.contains('chat-header')) {
+                    if (!el.querySelector('.xinhbot-refresh-btn')) {
+                        const refreshBtn = document.createElement('button');
+                        refreshBtn.className = 'xinhbot-refresh-btn';
+                        refreshBtn.title = 'Làm mới cuộc trò chuyện';
+                        refreshBtn.style.cssText = 'background:none;border:none;color:white;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center;transition:transform 0.2s;opacity:0.9;margin-left: auto;';
+                        refreshBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
+                        refreshBtn.onmouseover = () => refreshBtn.style.transform = 'scale(1.2)';
+                        refreshBtn.onmouseout = () => refreshBtn.style.transform = 'scale(1)';
+                        refreshBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            showClearConfirmModal();
+                        };
+                        el.appendChild(refreshBtn);
+                        el.style.justifyContent = 'space-between';
                     }
                 }
             }
@@ -342,7 +428,7 @@ export function XinhBot() {
             if (chatContainer) chatContainer.remove(); 
             if (tooltipEl) tooltipEl.remove(); // Gỡ tooltip khỏi DOM
         };
-    }, [user]);
+    }, [user?.id]); // Re-run if user ID changes, but don't return null if missing
 
     return null;
 }
