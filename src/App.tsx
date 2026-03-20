@@ -25,10 +25,12 @@ import { FallingBlossoms } from './components/effects/FallingBlossoms';
 import { FakeOrderNotification } from './components/common/FakeOrderNotification';
 import { XinhBot } from './components/common/XinhBot';
 import { ScrollToTop } from './components/common/ScrollToTop';
+import { NotificationTag } from './components/common/NotificationTag';
 
 function App() {
   return (
     <Router>
+      <NotificationTag />
       <ScrollToTop />
       <FallingBlossoms />
       <FakeOrderNotification />

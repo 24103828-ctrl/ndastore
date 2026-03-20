@@ -13,6 +13,8 @@ export function Dashboard() {
     });
     const [chartData, setChartData] = useState<any[]>([]);
     const [fakeOrderSettings, setFakeOrderSettings] = useState({ enabled: true, interval: 30 });
+    const [notificationTagSettings, setNotificationTagSettings] = useState({ enabled: false, productId: null as string | null, text: '🔥 Sản phẩm HOT đang giảm giá!' });
+    const [products, setProducts] = useState<any[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -84,6 +86,22 @@ export function Dashboard() {
             .single();
 
         if (settingsData) setFakeOrderSettings(settingsData.value);
+
+        // 7. Notification Tag Settings
+        const { data: tagSettingsData } = await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('key', 'notification_tag_settings')
+            .single();
+
+        if (tagSettingsData?.value) setNotificationTagSettings(tagSettingsData.value);
+
+        // Fetch products for dropdown
+        const { data: productsData } = await supabase
+            .from('products')
+            .select('id, name')
+            .order('created_at', { ascending: false });
+        if (productsData) setProducts(productsData);
     };
 
     const handleUpdateSettings = async (newSettings: any) => {
@@ -98,6 +116,23 @@ export function Dashboard() {
 
         if (!error) {
             setFakeOrderSettings(newSettings);
+        }
+        setIsSaving(false);
+    };
+
+    const handleUpdateTagSettings = async (newSettings: any) => {
+        setIsSaving(true);
+        
+        // Ensure record exists or updates normally
+        const { error } = await supabase
+            .from('site_settings')
+            .upsert({
+                key: 'notification_tag_settings',
+                value: newSettings
+            } as any, { onConflict: 'key' });
+
+        if (!error) {
+            setNotificationTagSettings(newSettings);
         }
         setIsSaving(false);
     };
@@ -176,44 +211,100 @@ export function Dashboard() {
             {/* Quick Settings */}
             <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
                 <h2 className="text-lg font-bold mb-6">Cấu hình Website</h2>
-                <div className="max-w-md space-y-6">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h4 className="font-bold text-gray-800">Thông báo mua hàng giả lập</h4>
-                            <p className="text-sm text-gray-500">Hiển thị thông báo khách hàng vừa mua sản phẩm ở góc màn hình.</p>
-                        </div>
-                        <button
-                            onClick={() => handleUpdateSettings({ ...fakeOrderSettings, enabled: !fakeOrderSettings.enabled })}
-                            disabled={isSaving}
-                            className={cn(
-                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                                fakeOrderSettings.enabled ? "bg-primary" : "bg-gray-200"
-                            )}
-                        >
-                            <span
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Setting 1: Fake Orders */}
+                    <div className="space-y-6 bg-white border border-gray-100 p-5 rounded-xl shadow-sm">
+                        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                            <div>
+                                <h4 className="font-bold text-gray-800 text-base">Thông báo mua hàng giả lập</h4>
+                                <p className="text-sm text-gray-500 mt-1">Hiển thị popup khách hàng vừa mua sản phẩm ở góc dưới.</p>
+                            </div>
+                            <button
+                                onClick={() => handleUpdateSettings({ ...fakeOrderSettings, enabled: !fakeOrderSettings.enabled })}
+                                disabled={isSaving}
                                 className={cn(
-                                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                                    fakeOrderSettings.enabled ? "translate-x-6" : "translate-x-1"
+                                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                    fakeOrderSettings.enabled ? "bg-primary" : "bg-gray-200"
                                 )}
-                            />
-                        </button>
+                            >
+                                <span
+                                    className={cn(
+                                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                        fakeOrderSettings.enabled ? "translate-x-6" : "translate-x-1"
+                                    )}
+                                />
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                            <div>
+                                <h4 className="font-medium text-gray-700 text-sm">Tần suất hiển thị</h4>
+                                <p className="text-xs text-gray-500 mt-1">Chờ giữa mỗi lần hiện (giây)</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    value={fakeOrderSettings.interval}
+                                    onChange={(e) => handleUpdateSettings({ ...fakeOrderSettings, interval: parseInt(e.target.value) || 30 })}
+                                    min="5"
+                                    max="3600"
+                                    className="w-20 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-center text-sm"
+                                />
+                                <span className="text-sm text-gray-500 font-medium">s</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h4 className="font-bold text-gray-800">Tần suất hiển thị (giây)</h4>
-                            <p className="text-sm text-gray-500">Thời gian chờ giữa mỗi lần hiện thông báo.</p>
+                    {/* Setting 2: Notification Tag */}
+                    <div className="space-y-6 bg-white border border-gray-100 p-5 rounded-xl shadow-sm">
+                        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                            <div>
+                                <h4 className="font-bold text-gray-800 text-base">Tag Thông Báo Gắn Đầu Trang</h4>
+                                <p className="text-sm text-gray-500 mt-1">Hiển thị thanh chạy nổi bật lơ lửng trên cùng website.</p>
+                            </div>
+                            <button
+                                onClick={() => handleUpdateTagSettings({ ...notificationTagSettings, enabled: !notificationTagSettings.enabled })}
+                                disabled={isSaving}
+                                className={cn(
+                                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                    notificationTagSettings.enabled ? "bg-primary" : "bg-gray-200"
+                                )}
+                            >
+                                <span
+                                    className={cn(
+                                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                        notificationTagSettings.enabled ? "translate-x-6" : "translate-x-1"
+                                    )}
+                                />
+                            </button>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                value={fakeOrderSettings.interval}
-                                onChange={(e) => handleUpdateSettings({ ...fakeOrderSettings, interval: parseInt(e.target.value) || 30 })}
-                                min="5"
-                                max="3600"
-                                className="w-20 px-3 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary text-center"
-                            />
-                            <span className="text-sm text-gray-500 font-medium">s</span>
+                        
+                        <div className="space-y-4 pt-2">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nội dung thông báo động</label>
+                                <input
+                                    type="text"
+                                    value={notificationTagSettings.text}
+                                    onChange={(e) => setNotificationTagSettings({...notificationTagSettings, text: e.target.value})}
+                                    onBlur={() => handleUpdateTagSettings(notificationTagSettings)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-sm"
+                                    placeholder="VD: 🔥 Sản phẩm HOT đang giảm giá..."
+                                    disabled={!notificationTagSettings.enabled}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Liên kết sự kiện tới Sản phẩm</label>
+                                <select
+                                    value={notificationTagSettings.productId || ''}
+                                    onChange={(e) => handleUpdateTagSettings({...notificationTagSettings, productId: e.target.value || null})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-sm bg-white"
+                                    disabled={!notificationTagSettings.enabled}
+                                >
+                                    <option value="">-- Không điều hướng (Chỉ hiện chữ) --</option>
+                                    {products.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
