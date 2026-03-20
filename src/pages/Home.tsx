@@ -22,10 +22,50 @@ interface Product {
 export function Home() {
     const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [bgUrl, setBgUrl] = useState<string | null>(null);
     const { t } = useLanguage();
 
     useEffect(() => {
         fetchFeaturedProducts();
+
+        const fetchBg = async () => {
+            const { data } = await supabase
+                .from('site_settings')
+                .select('value')
+                .eq('key', 'shop_background_url')
+                .single();
+            if (data?.value?.url) {
+                setBgUrl(data.value.url);
+            }
+        };
+        fetchBg();
+
+        const channel = supabase.channel('public:site_settings:home_bg')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'site_settings', filter: "key=eq.shop_background_url" },
+                (payload) => {
+                    if (payload.new && payload.new.value?.url) {
+                        setBgUrl(payload.new.value.url);
+                    } else if (payload.new) {
+                        setBgUrl(null);
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'site_settings', filter: "key=eq.shop_background_url" },
+                (payload) => {
+                    if (payload.new && payload.new.value?.url) {
+                        setBgUrl(payload.new.value.url);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const fetchFeaturedProducts = async () => {
@@ -45,13 +85,10 @@ export function Home() {
         <Layout>
             {/* Hero Section - Optimized for Mobile */}
             <section className="hero-section relative h-[400px] md:h-[600px] flex items-end justify-center pb-12 md:pb-32 bg-black/20 overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src={bghoadao}
-                        alt="Hero Background"
-                        className="w-full h-full object-cover opacity-90"
-                    />
-                </div>
+                <div 
+                    className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-90 transition-all duration-500"
+                    style={{ backgroundImage: bgUrl ? `url(${bgUrl})` : `url(${bghoadao})` }}
+                />
                 <div className="relative z-10 text-center px-4">
                     <Link
                         to="/shop"

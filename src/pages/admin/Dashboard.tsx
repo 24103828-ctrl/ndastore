@@ -14,6 +14,7 @@ export function Dashboard() {
     const [chartData, setChartData] = useState<any[]>([]);
     const [fakeOrderSettings, setFakeOrderSettings] = useState({ enabled: true, interval: 30 });
     const [notificationTagSettings, setNotificationTagSettings] = useState({ enabled: false, productId: null as string | null, text: '🔥 Sản phẩm HOT đang giảm giá!' });
+    const [bgSettings, setBgSettings] = useState({ url: '' });
     const [products, setProducts] = useState<any[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -96,6 +97,14 @@ export function Dashboard() {
 
         if (tagSettingsData?.value) setNotificationTagSettings(tagSettingsData.value);
 
+        // 8. Background Settings
+        const { data: bgData } = await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('key', 'shop_background_url')
+            .single();
+        if (bgData?.value) setBgSettings(bgData.value);
+
         // Fetch products for dropdown
         const { data: productsData } = await supabase
             .from('products')
@@ -133,6 +142,22 @@ export function Dashboard() {
 
         if (!error) {
             setNotificationTagSettings(newSettings);
+        }
+        setIsSaving(false);
+    };
+
+    const handleUpdateBgSettings = async (url: string) => {
+        setIsSaving(true);
+        const newSettings = { url };
+        const { error } = await supabase
+            .from('site_settings')
+            .upsert({
+                key: 'shop_background_url',
+                value: newSettings
+            } as any, { onConflict: 'key' });
+
+        if (!error) {
+            setBgSettings(newSettings);
         }
         setIsSaving(false);
     };
@@ -305,6 +330,50 @@ export function Dashboard() {
                                     ))}
                                 </select>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Setting 3: Background Image */}
+                    <div className="space-y-6 bg-white border border-gray-100 p-5 rounded-xl shadow-sm lg:col-span-2">
+                        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                            <div>
+                                <h4 className="font-bold text-gray-800 text-base">Ảnh Nền Toàn Website</h4>
+                                <p className="text-sm text-gray-500 mt-1">Thay đổi ảnh nền hiển thị trên trang chủ và toàn bộ web (chèn link ảnh trực tiếp).</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Ảnh Nền (Background URL)</label>
+                                <input
+                                    type="text"
+                                    value={bgSettings.url}
+                                    onChange={(e) => setBgSettings({ url: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-sm"
+                                    placeholder="Ví dụ: https://example.com/flower.jpg"
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => handleUpdateBgSettings(bgSettings.url)}
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-primary text-white text-sm font-bold rounded hover:bg-pink-700 transition"
+                                >
+                                    Lưu Ảnh Nền
+                                </button>
+                                <button
+                                    onClick={() => handleUpdateBgSettings('')}
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded hover:bg-gray-200 transition"
+                                >
+                                    Khôi phục mặc định
+                                </button>
+                            </div>
+                            {bgSettings.url && (
+                                <div className="mt-2 relative w-[200px] h-[120px] rounded border border-gray-200 overflow-hidden shadow-inner bg-gray-50">
+                                    <img src={bgSettings.url} alt="Preview BG" className="w-full h-full object-cover opacity-80" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
