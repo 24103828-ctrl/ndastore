@@ -24,10 +24,12 @@ import { CustomerBehavior } from './pages/admin/CustomerBehavior';
 import { FallingBlossoms } from './components/effects/FallingBlossoms';
 import { FakeOrderNotification } from './components/common/FakeOrderNotification';
 import { XinhBot } from './components/common/XinhBot';
+import { ScrollToTop } from './components/common/ScrollToTop';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <FallingBlossoms />
       <FakeOrderNotification />
       <XinhBot />
