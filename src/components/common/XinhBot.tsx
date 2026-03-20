@@ -303,7 +303,49 @@ export function XinhBot() {
             if ((node as Element).shadowRoot) scanSD((node as Element).shadowRoot as any as Node);
             if (node.nodeType === 1 && (node as Element).classList) {
                 const el = node as HTMLElement;
-                if (el.classList.contains('chat-window')) { const c = window.getComputedStyle(el); if (c.display !== 'none' && c.opacity !== '0') isChatOpen = true; }
+                if (el.classList.contains('chat-window')) { 
+                    const c = window.getComputedStyle(el); 
+                    if (c.display !== 'none' && c.opacity !== '0') isChatOpen = true; 
+                    
+                    if (!el.querySelector('.xinhbot-resize-handle-tl')) {
+                        const createHandle = (className: string, cursor: string, isTop: boolean, isLeft: boolean, css: string) => {
+                            const handle = document.createElement('div');
+                            handle.className = className;
+                            handle.style.cssText = `position: absolute; ${css} cursor: ${cursor}; z-index: 9999999; background: transparent;`;
+                            
+                            handle.onmousedown = (e) => {
+                                e.preventDefault(); e.stopPropagation();
+                                const startX = e.clientX, startY = e.clientY;
+                                const rect = el.getBoundingClientRect();
+                                const startWidth = rect.width, startHeight = rect.height;
+                                
+                                const onMouseMove = (moveEvent: MouseEvent) => {
+                                    if (isLeft) {
+                                        const newWidth = Math.max(350, startWidth - (moveEvent.clientX - startX));
+                                        el.style.setProperty('width', newWidth + 'px', 'important');
+                                        el.style.setProperty('max-width', '90vw', 'important');
+                                    }
+                                    if (isTop) {
+                                        const newHeight = Math.max(500, startHeight - (moveEvent.clientY - startY));
+                                        el.style.setProperty('height', newHeight + 'px', 'important');
+                                        el.style.setProperty('max-height', '90vh', 'important');
+                                    }
+                                };
+                                const onMouseUp = () => {
+                                    document.removeEventListener('mousemove', onMouseMove);
+                                    document.removeEventListener('mouseup', onMouseUp);
+                                };
+                                document.addEventListener('mousemove', onMouseMove);
+                                document.addEventListener('mouseup', onMouseUp);
+                            };
+                            return handle;
+                        };
+
+                        el.appendChild(createHandle('xinhbot-resize-handle-tl', 'nwse-resize', true, true, 'top: 0; left: 0; width: 15px; height: 15px; border-top-left-radius: 20px;'));
+                        el.appendChild(createHandle('xinhbot-resize-handle-t', 'ns-resize', true, false, 'top: 0; left: 15px; right: 0; height: 10px;'));
+                        el.appendChild(createHandle('xinhbot-resize-handle-l', 'ew-resize', false, true, 'top: 15px; left: 0; width: 10px; bottom: 0;'));
+                    }
+                }
                 
                 if (el.classList.contains('chat-header')) {
                     const titleEl = el.querySelector('.chat-header-title');
@@ -321,11 +363,11 @@ export function XinhBot() {
                         closeBtn.style.right = '15px';
                     }
 
-                    // Tích hợp Icon Làm mới 🔄
+                    // Tích hợp Icon Làm mới
                     if (!el.querySelector('.xinhbot-refresh-btn')) {
                         const btn = document.createElement('button'); btn.className = 'xinhbot-refresh-btn';
-                        btn.style.cssText = 'position:absolute; right:55px; background:none;border:none;color:white;cursor:pointer;padding:8px;display:flex;align-items:center;font-size:22px;transition:transform 0.2s;';
-                        btn.innerHTML = '🔄'; 
+                        btn.style.cssText = 'position:absolute; right:55px; background:none; border:none; color:#C2185B; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:transform 0.2s; outline:none; border-radius:50%;';
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`; 
                         btn.title = 'Làm mới đoạn chat';
                         btn.onmouseover = () => { btn.style.transform = 'rotate(30deg) scale(1.1)'; };
                         btn.onmouseout = () => { btn.style.transform = 'rotate(0deg) scale(1)'; };
