@@ -135,10 +135,14 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
             setSessionId(newSessionId);
 
             // B4: Insert vào Database
+            if (!user?.id) {
+                throw new Error("Vui lòng đăng nhập để sử dụng tính năng thử đồ AI.");
+            }
+
             const { error: dbError } = await supabase
                 .from('try_on_requests' as any)
                 .insert({
-                    user_id: user?.id || null, // Allow null if not logged in
+                    user_id: user.id,
                     product_id: productId,
                     session_id: newSessionId,
                     human_image: humanImageUrl,

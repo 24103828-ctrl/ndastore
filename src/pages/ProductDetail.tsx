@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../context/CartContext';
@@ -182,6 +182,7 @@ export function ProductDetail() {
     };
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleAddToCart = () => {
         if (!product) return;
@@ -469,7 +470,13 @@ export function ProductDetail() {
                                         <motion.button
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.95 }}
-                                            onClick={() => setIsTryOnModalOpen(true)}
+                                            onClick={() => {
+                                                if (!user) {
+                                                    navigate('/login', { state: { from: location.pathname } });
+                                                } else {
+                                                    setIsTryOnModalOpen(true);
+                                                }
+                                            }}
                                             className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 px-6 rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-2"
                                         >
                                             <Sparkles className="w-5 h-5" />

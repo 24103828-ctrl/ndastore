@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { supabase } from '../lib/supabase';
 
@@ -9,6 +9,7 @@ export function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,7 +24,8 @@ export function Login() {
         if (error) {
             setError(error.message);
         } else {
-            navigate('/');
+            const from = location.state?.from || '/';
+            navigate(from, { replace: true });
         }
         setLoading(false);
     };
