@@ -7,10 +7,11 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { ProductCard } from '../components/product/ProductCard';
-import { Star, Minus, Plus, ShoppingBag, Truck, Share2, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { Star, Minus, Plus, ShoppingBag, Truck, Share2, ChevronLeft, ChevronRight, Heart, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
+import { AITryOnModal } from '../components/product/AITryOnModal';
 
 // Types (should ideally be shared)
 interface Product {
@@ -56,6 +57,7 @@ export function ProductDetail() {
     const [isHovering, setIsHovering] = useState(false);
     const [selectedColor, setSelectedColor] = useState<string>('');
     const [showColorError, setShowColorError] = useState(false);
+    const [isTryOnModalOpen, setIsTryOnModalOpen] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -462,6 +464,17 @@ export function ProductDetail() {
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {/* AI Try On Button */}
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setIsTryOnModalOpen(true)}
+                                            className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 px-6 rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-2"
+                                        >
+                                            <Sparkles className="w-5 h-5" />
+                                            Thử Đồ AI Cùng XinhBot
+                                        </motion.button>
                                     </div>
 
                                     <div className="space-y-4 pt-8 border-t border-gray-100 text-sm text-gray-600">
@@ -573,6 +586,15 @@ export function ProductDetail() {
                     )}
                 </div>
             </div>
+
+            {/* AI Try On Modal */}
+            <AITryOnModal 
+                isOpen={isTryOnModalOpen}
+                onClose={() => setIsTryOnModalOpen(false)}
+                productId={product.id}
+                productName={product.name}
+                garmentImage={currentImage}
+            />
         </Layout>
     );
 }

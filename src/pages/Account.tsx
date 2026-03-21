@@ -24,6 +24,16 @@ interface Profile {
     address: string | null;
 }
 
+interface TryOnRequest {
+    id: string;
+    session_id: string;
+    human_image: string;
+    garment_image: string;
+    status: string;
+    result_image: string | null;
+    created_at: string;
+}
+
 export function Account() {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
@@ -33,6 +43,7 @@ export function Account() {
     const [showQR, setShowQR] = useState<string | null>(null);
     const [userReviews, setUserReviews] = useState<any[]>([]);
     const [selectedReviewItem, setSelectedReviewItem] = useState<{ product: any; orderId: string } | null>(null);
+    const [tryOnHistory, setTryOnHistory] = useState<TryOnRequest[]>([]);
 
     useEffect(() => {
         if (!user) {
@@ -40,6 +51,28 @@ export function Account() {
             return;
         }
         fetchData();
+
+        // Realtime subscription for try_on_requests
+        const channel = supabase
+            .channel('public:try_on_requests')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'try_on_requests',
+                    filter: `user_id=eq.${user.id}`
+                },
+                () => {
+                    // Refetch data when there is an update (e.g. status changed)
+                    fetchData();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [user, navigate]);
 
     const fetchData = async () => {
@@ -72,6 +105,15 @@ export function Account() {
                 .eq('user_id', user.id);
 
             if (reviewsData) setUserReviews(reviewsData);
+
+            // Fetch Try-On History
+            const { data: tryOnData } = await supabase
+                .from('try_on_requests' as any)
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (tryOnData) setTryOnHistory(tryOnData as any);
 
         } catch (error) {
             console.error('Error fetching account data:', error);
@@ -179,6 +221,64 @@ export function Account() {
                                         <p className="font-semibold text-stone-900 leading-relaxed">{profile?.address || 'Chưa cập nhật'}</p>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Try-On History */}
+                            <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                                <h2 className="text-lg font-bold flex items-center gap-2 text-stone-900 mb-6">
+                                    <Star className="w-5 h-5 text-primary" /> Lịch sử thử đồ AI
+                                </h2>
+
+                                {tryOnHistory.length === 0 ? (
+                                    <div className="text-center py-10 bg-stone-50 rounded-xl border-2 border-dashed border-stone-200">
+                                        <p className="text-stone-500 font-medium">Bạn chưa có lịch sử thử đồ nào.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        {tryOnHistory.map((req) => (
+                                            <div key={req.id} className="border border-stone-100 rounded-xl overflow-hidden hover:border-primary transition-all bg-white shadow-sm flex flex-col relative group">
+                                                <div className="flex h-40">
+                                                    <div className="w-1/2 bg-stone-100 border-r border-stone-100 p-2">
+                                                        <p className="text-[10px] text-stone-400 font-bold uppercase mb-1 drop-shadow-sm absolute z-10 bg-white/80 px-1 rounded">Ảnh của bạn</p>
+                                                        <img src={req.human_image} alt="Bi" className="w-full h-full object-cover rounded shadow-sm" />
+                                                    </div>
+                                                    <div className="w-1/2 bg-stone-100 p-2">
+                                                        <p className="text-[10px] text-stone-400 font-bold uppercase mb-1 drop-shadow-sm absolute z-10 bg-white/80 px-1 rounded right-2">Sản phẩm</p>
+                                                        <img src={req.garment_image} alt="Sp" className="w-full h-full object-cover rounded shadow-sm" />
+                                                    </div>
+                                                </div>
+                                                <div className="p-4 flex flex-col justify-between flex-1 bg-stone-50/30">
+                                                    <p className="text-[11px] font-medium text-stone-400 uppercase tracking-widest mb-3">{formatDate(req.created_at)}</p>
+                                                    
+                                                    {req.status === 'completed' && req.result_image ? (
+                                                        <div className="space-y-3">
+                                                            <div className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full inline-block border border-green-200">
+                                                                ✓ Hoàn tất
+                                                            </div>
+                                                            <div className="w-full aspect-[3/4] rounded-lg overflow-hidden border border-stone-200 shadow-sm relative">
+                                                                <img src={req.result_image} alt="Result" className="w-full h-full object-cover" />
+                                                                <a 
+                                                                    href={req.result_image}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="absolute bottom-2 right-2 bg-white/90 text-primary font-bold text-xs px-3 py-1.5 rounded-lg shadow-md hover:bg-primary hover:text-white transition-colors"
+                                                                >
+                                                                    Tải về
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center p-6 bg-stone-50 rounded-lg border border-stone-100 h-full">
+                                                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+                                                            <p className="text-sm font-bold text-primary animate-pulse">Đang thiết kế...</p>
+                                                            <p className="text-[10px] text-stone-500 mt-1">Hệ thống đang xử lý ảnh của bạn</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Orders */}
