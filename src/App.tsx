@@ -26,6 +26,7 @@ import { FakeOrderNotification } from './components/common/FakeOrderNotification
 import { XinhBot } from './components/common/XinhBot';
 import { ScrollToTop } from './components/common/ScrollToTop';
 import { NotificationTag } from './components/common/NotificationTag';
+import { FloatingMusicPlayer } from './components/common/FloatingMusicPlayer';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
       <FallingBlossoms />
       <FakeOrderNotification />
       <XinhBot />
+      <FloatingMusicPlayer />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />

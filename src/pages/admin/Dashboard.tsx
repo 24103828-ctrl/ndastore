@@ -15,6 +15,7 @@ export function Dashboard() {
     const [fakeOrderSettings, setFakeOrderSettings] = useState({ enabled: true, interval: 30 });
     const [notificationTagSettings, setNotificationTagSettings] = useState({ enabled: false, productId: null as string | null, text: '🔥 Sản phẩm HOT đang giảm giá!' });
     const [bgSettings, setBgSettings] = useState({ url: '' });
+    const [musicPlayerSettings, setMusicPlayerSettings] = useState({ show_button: true, auto_play: false, url: '' });
     const [products, setProducts] = useState<any[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -105,6 +106,18 @@ export function Dashboard() {
             .single();
         if (bgData?.value) setBgSettings(bgData.value);
 
+        // 9. Music Player Settings
+        const { data: musicData } = await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('key', 'music_player_settings')
+            .single();
+        if (musicData?.value) setMusicPlayerSettings({
+            show_button: musicData.value.show_button ?? musicData.value.enabled ?? true,
+            auto_play: musicData.value.auto_play ?? false,
+            url: musicData.value.url ?? ''
+        });
+
         // Fetch products for dropdown
         const { data: productsData } = await supabase
             .from('products')
@@ -158,6 +171,27 @@ export function Dashboard() {
 
         if (!error) {
             setBgSettings(newSettings);
+        }
+        setIsSaving(false);
+    };
+
+    const handleUpdateMusicSettings = async (newSettings: {show_button: boolean; auto_play: boolean; url: string}) => {
+        setIsSaving(true);
+        // BƯỚC 1: Ép kiểu rõ ràng về Boolean trước khi gọi API UPSERT
+        const payloadValue = { 
+            show_button: Boolean(newSettings.show_button), 
+            auto_play: Boolean(newSettings.auto_play), 
+            url: newSettings.url || '' 
+        };
+        const { error } = await supabase
+            .from('site_settings')
+            .upsert({
+                key: 'music_player_settings',
+                value: payloadValue
+            } as any, { onConflict: 'key' });
+
+        if (!error) {
+            setMusicPlayerSettings(payloadValue);
         }
         setIsSaving(false);
     };
@@ -374,6 +408,91 @@ export function Dashboard() {
                                     <img src={bgSettings.url} alt="Preview BG" className="w-full h-full object-cover opacity-80" />
                                 </div>
                             )}
+                        </div>
+                    </div>
+
+                    {/* Setting 4: Nhạc Nền Mua Sắm */}
+                    <div className="space-y-6 bg-white border border-gray-100 p-5 rounded-xl shadow-sm lg:col-span-2">
+                        <div className="flex flex-col pb-4 border-b border-gray-100 gap-4">
+                            <div>
+                                <h4 className="font-bold text-gray-800 text-base">Nhạc Nền Mua Sắm</h4>
+                                <p className="text-sm text-gray-500 mt-1">Cấu hình nhạc nền hiển thị và tự động phát trên giao diện người dùng.</p>
+                            </div>
+                            
+                            {/* Toggle 1: Hiển thị nút nghe nhạc */}
+                            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <div>
+                                    <h5 className="font-medium text-gray-800 text-sm">Hiển thị nút nghe nhạc</h5>
+                                    <p className="text-xs text-gray-500 mt-1">Bật để hiển thị icon nhạc nền trôi nổi trên giao diện khách hàng.</p>
+                                </div>
+                                <button
+                                    onClick={() => setMusicPlayerSettings({...musicPlayerSettings, show_button: !musicPlayerSettings.show_button})}
+                                    disabled={isSaving}
+                                    className={cn(
+                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                        musicPlayerSettings.show_button ? "bg-primary" : "bg-gray-200"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                            musicPlayerSettings.show_button ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* Toggle 2: Tự động phát nhạc */}
+                            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <div>
+                                    <h5 className="font-medium text-gray-800 text-sm">Tự động phát nhạc (Auto-play)</h5>
+                                    <p className="text-xs text-orange-500 mt-1">Cảnh báo: Tùy theo chính sách, một số trình duyệt có thể chặn tính năng tự động phát nhạc.</p>
+                                </div>
+                                <button
+                                    onClick={() => setMusicPlayerSettings({...musicPlayerSettings, auto_play: !musicPlayerSettings.auto_play})}
+                                    disabled={isSaving}
+                                    className={cn(
+                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                        musicPlayerSettings.auto_play ? "bg-primary" : "bg-gray-200"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                            musicPlayerSettings.auto_play ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Nhạc Nền (File .mp3)</label>
+                                <input
+                                    type="text"
+                                    value={musicPlayerSettings.url}
+                                    onChange={(e) => setMusicPlayerSettings({ ...musicPlayerSettings, url: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-sm"
+                                    placeholder="Ví dụ: https://example.com/audio.mp3"
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => handleUpdateMusicSettings(musicPlayerSettings)}
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-primary text-white text-sm font-bold rounded hover:bg-pink-700 transition"
+                                >
+                                    Lưu Nhạc Nền
+                                </button>
+                                <button
+                                    onClick={() => handleUpdateMusicSettings({...musicPlayerSettings, url: ''})}
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded hover:bg-gray-200 transition"
+                                >
+                                    Khôi phục URL mặc định
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

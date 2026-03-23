@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Sparkles, Download, RefreshCcw, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface AITryOnModalProps {
@@ -18,17 +19,45 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
     // UI States
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [status, setStatus] = useState<'idle' | 'uploading' | 'requesting' | 'processing' | 'completed' | 'error'>('idle');
+    const [status, setStatus] = useState<'idle' | 'uploading' | 'requesting' | 'processing' | 'completed' | 'error'>(() => {
+        if (typeof window !== 'undefined') {
+            const isProcessing = sessionStorage.getItem('aiTryOnProcessing') === 'true';
+            const storedProductId = sessionStorage.getItem('aiTryOnActiveProductID');
+            if (isProcessing && storedProductId === productId) {
+                return 'processing';
+            }
+        }
+        return 'idle';
+    });
     const [resultImage, setResultImage] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string>('');
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(() => {
+        if (typeof window !== 'undefined') {
+            const storedProductId = sessionStorage.getItem('aiTryOnActiveProductID');
+            if (storedProductId === productId) {
+                return sessionStorage.getItem('aiTryOnSessionId') || null;
+            }
+        }
+        return null;
+    });
 
     // Reset state when modal opens/closes
     useEffect(() => {
-        if (isOpen && status !== 'processing' && status !== 'completed') {
-            resetState();
+        if (isOpen) {
+            if (status !== 'processing' && status !== 'completed') {
+                resetState();
+            }
         }
     }, [isOpen]);
+
+    const handleClose = () => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('aiTryOnProcessing');
+            sessionStorage.removeItem('aiTryOnSessionId');
+            sessionStorage.removeItem('aiTryOnActiveProductID');
+        }
+        onClose();
+    };
 
     // Realtime subscription
     useEffect(() => {
@@ -53,9 +82,19 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
                     if (newRecord.status === 'completed' && newRecord.result_image) {
                         setResultImage(newRecord.result_image);
                         setStatus('completed');
+                        if (typeof window !== 'undefined') {
+                            sessionStorage.removeItem('aiTryOnProcessing');
+                            sessionStorage.removeItem('aiTryOnSessionId');
+                            sessionStorage.removeItem('aiTryOnActiveProductID');
+                        }
                     } else if (newRecord.status === 'error') {
                         setErrorMsg('Có lỗi xảy ra trong quá trình xử lý AI.');
                         setStatus('error');
+                        if (typeof window !== 'undefined') {
+                            sessionStorage.removeItem('aiTryOnProcessing');
+                            sessionStorage.removeItem('aiTryOnSessionId');
+                            sessionStorage.removeItem('aiTryOnActiveProductID');
+                        }
                     }
                 }
             )
@@ -75,6 +114,11 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
         setResultImage(null);
         setErrorMsg('');
         setSessionId(null);
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('aiTryOnProcessing');
+            sessionStorage.removeItem('aiTryOnSessionId');
+            sessionStorage.removeItem('aiTryOnActiveProductID');
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +224,11 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
 
             // B6: Chuyển sang màn hình Loading chờ Realtime
             setStatus('processing');
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('aiTryOnProcessing', 'true');
+                sessionStorage.setItem('aiTryOnSessionId', newSessionId);
+                sessionStorage.setItem('aiTryOnActiveProductID', productId);
+            }
 
         } catch (err: any) {
             console.error("Try On Error:", err);
@@ -219,7 +268,7 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 />
 
@@ -237,7 +286,7 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
                             <h3 className="text-xl font-bold text-gray-900 font-serif">Thử Đồ AI</h3>
                         </div>
                         <button 
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                         >
                             <X className="w-5 h-5" />
@@ -260,7 +309,7 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
                                 <h4 className="text-lg font-bold text-gray-900 mb-2">Đang thiết kế riêng cho bạn...</h4>
                                 <p className="text-gray-500 text-sm">
                                     Chuyên viên đang thiết kế riêng cho bạn, vui lòng đợi trong giây lát...<br/>
-                                    (Bạn có thể đóng cửa sổ này để xem sản phẩm khác, kết quả sẽ nằm trong <b>Lịch sử thử đồ</b>)
+                                    (Bạn có thể đóng cửa sổ này để xem sản phẩm khác, kết quả sẽ nằm trong <b><Link to="/account" onClick={handleClose} className="text-primary hover:underline transition-colors">Lịch sử thử đồ</Link></b>)
                                 </p>
                             </div>
                         )}
@@ -368,6 +417,9 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
                                         </>
                                     )}
                                 </button>
+                                {(status === 'uploading' || status === 'requesting') && (
+                                    <p className="text-center text-sm text-gray-500 mt-3">Xin vui lòng giữ màn hình</p>
+                                )}
                             </div>
                         )}
 
