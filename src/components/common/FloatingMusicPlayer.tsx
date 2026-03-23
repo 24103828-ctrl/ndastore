@@ -95,7 +95,7 @@ export function FloatingMusicPlayer() {
     };
 
     return (
-        <div className="fixed bottom-6 left-6 z-[9999] bg-white rounded-full p-3 shadow-2xl cursor-pointer hover:scale-110 transition-transform flex items-center gap-2 border border-pink-100 group">
+        <div className="fixed bottom-6 left-6 z-[9999] bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform border border-pink-100 group min-w-[3rem] h-12 px-3">
             <audio 
                 ref={audioRef} 
                 src={musicUrl} 
@@ -105,11 +105,11 @@ export function FloatingMusicPlayer() {
                 onPause={() => setIsPlaying(false)}
             />
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
                 <div 
                     onClick={togglePlay}
                     className={cn(
-                        "w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-pink-500 shadow-sm cursor-pointer transition-transform hover:scale-110",
+                        "w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-pink-500 shadow-sm cursor-pointer transition-transform hover:scale-110",
                         isPlaying && "animate-[spin_4s_linear_infinite]"
                     )}
                     title={isPlaying ? "Dừng nhạc" : "Phát nhạc"}
@@ -125,13 +125,13 @@ export function FloatingMusicPlayer() {
                 </div>
                 
                 {/* Controls */}
-                <div className="flex items-center gap-1 opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto transition-all overflow-hidden duration-300 pr-1">
+                <div className="flex items-center gap-1 opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto transition-all overflow-hidden duration-300">
                     <button 
                         onClick={toggleMute}
-                        className="p-2 hover:bg-pink-100 rounded-full text-gray-500 transition"
+                        className="p-1.5 hover:bg-pink-100 rounded-full text-gray-500 transition"
                         title={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}
                     >
-                        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                 </div>
             </div>
