@@ -95,7 +95,7 @@ export function FloatingMusicPlayer() {
     };
 
     return (
-        <div className="fixed bottom-6 left-6 z-[9999] bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform border border-pink-100 group min-w-[3rem] h-12 px-3">
+        <div className="fixed bottom-6 left-6 z-[9999] bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-300 border border-pink-100 group min-w-[2.5rem] h-10 p-1">
             <audio 
                 ref={audioRef} 
                 src={musicUrl} 
@@ -105,27 +105,27 @@ export function FloatingMusicPlayer() {
                 onPause={() => setIsPlaying(false)}
             />
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
                 <div 
                     onClick={togglePlay}
                     className={cn(
-                        "w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-pink-500 shadow-sm cursor-pointer transition-transform hover:scale-110",
+                        "w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-pink-500 shadow-sm cursor-pointer transition-transform hover:scale-110 shrink-0",
                         isPlaying && "animate-[spin_4s_linear_infinite]"
                     )}
                     title={isPlaying ? "Dừng nhạc" : "Phát nhạc"}
                 >
-                    <div className="relative flex items-center justify-center w-5 h-5">
+                    <div className="relative flex items-center justify-center w-[1.15rem] h-[1.15rem]">
                         <FaMusic className="w-full h-full text-pink-500" />
                         {!isPlaying && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="w-[130%] h-[2.5px] bg-pink-600 rotate-45 rounded-full" />
+                                <div className="w-[130%] h-[2px] bg-pink-600 rotate-45 rounded-full" />
                             </div>
                         )}
                     </div>
                 </div>
                 
                 {/* Controls */}
-                <div className="flex items-center gap-1 opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto transition-all overflow-hidden duration-300">
+                <div className="flex items-center opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto group-hover:ml-1.5 transition-all overflow-hidden duration-300">
                     <button 
                         onClick={toggleMute}
                         className="p-1.5 hover:bg-pink-100 rounded-full text-gray-500 transition"
