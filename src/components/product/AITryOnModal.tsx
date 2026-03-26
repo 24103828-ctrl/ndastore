@@ -199,7 +199,7 @@ export function AITryOnModal({ isOpen, onClose, productId, productName, garmentI
             }
 
             // B5: Gửi request Webhook
-            const webhookUrl = "https://phamhuucuong231.app.n8n.cloud/webhook/1fde6f9a-525c-4533-8565-f859f6a0bbf9";
+            const webhookUrl = "https://phenikaa24103828.app.n8n.cloud/webhook/1fde6f9a-525c-4533-8565-f859f6a0bbf9";
             
             const webhookPayload = {
                 session_id: newSessionId,

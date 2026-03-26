@@ -219,7 +219,7 @@ export function XinhBot() {
 
             if (!chatInitialized.current) {
                 chatInstance.current = (window as any).createN8nChat({
-                    webhookUrl: 'https://phamhuucuong231.app.n8n.cloud/webhook/004eb129-66fb-431c-9f64-2fa8df0954dd/chat',
+                    webhookUrl: 'https://phenikaa24103828.app.n8n.cloud/webhook/004eb129-66fb-431c-9f64-2fa8df0954dd/chat',
                     target: '#xinhbot-container', 
                     mode: 'window', 
                     showWelcomeScreen: false, // 3. Tắt màn hình "Start a chat..."
