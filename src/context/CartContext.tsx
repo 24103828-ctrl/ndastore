@@ -34,7 +34,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const { user, loading: authLoading } = useAuth();
+    const { user, phone, loading: authLoading } = useAuth();
     const { showToast } = useToast();
 
     const initialFetchDone = useRef(false);
@@ -127,7 +127,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             color: color || '',
             quantity: quantity,
             user_id: user?.id || null,
-            session_id: effectiveSessionId
+            session_id: effectiveSessionId,
+            phone: phone
         };
 
         setIsProcessing(true);

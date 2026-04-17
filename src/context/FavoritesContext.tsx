@@ -16,7 +16,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 export function FavoritesProvider({ children }: { children: ReactNode }) {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
-    const { user, loading: authLoading } = useAuth();
+    const { user, phone, loading: authLoading } = useAuth();
 
     const fetchFavorites = useCallback(async () => {
         if (!user) return;
@@ -103,7 +103,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
                     .eq('product_id', productId);
             } else {
                 await (supabase.from('favorites' as any) as any)
-                    .insert({ user_id: user.id, product_id: productId });
+                    .insert({ user_id: user.id, product_id: productId, phone: phone });
             }
             // Always fetch again to ensure precision
             await fetchFavorites();

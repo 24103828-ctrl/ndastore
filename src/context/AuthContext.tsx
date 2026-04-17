@@ -6,7 +6,8 @@ import type { Session, User } from '@supabase/supabase-js';
 interface AuthContextType {
     session: Session | null;
     user: User | null;
-    isAdmin: boolean; // [NEW]
+    isAdmin: boolean;
+    phone: string | null;
     loading: boolean;
     signOut: () => Promise<void>;
 }
@@ -16,7 +17,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
-    const [isAdmin, setIsAdmin] = useState(false); // [NEW] Admin state
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [phone, setPhone] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 checkAdminStatus(session.user.id);
             } else {
                 setIsAdmin(false);
+                setPhone(null);
                 setLoading(false);
             }
         });
@@ -71,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     } else {
                         // Refresh admin status if roles changed
                         setIsAdmin(!!newProfile.is_admin);
+                        setPhone(newProfile.phone || null);
                     }
                 }
             })
@@ -90,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('is_admin, is_banned')
+                .select('is_admin, is_banned, phone')
                 .eq('id', userId)
                 .single();
             if (error && error.code !== 'PGRST116') {
@@ -106,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             console.log('User status result:', data);
             setIsAdmin(!!(data as any)?.is_admin);
+            setPhone((data as any)?.phone || null);
         } catch (error) {
             console.error('Error checking admin status:', error);
             setIsAdmin(false);
@@ -137,14 +142,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signOut = async () => {
         console.log('Performing sign out...');
-        await supabase.auth.signOut();
         setSession(null);
         setUser(null);
         setIsAdmin(false);
+        setPhone(null);
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, isAdmin, loading, signOut }}>
+        <AuthContext.Provider value={{ session, user, isAdmin, phone, loading, signOut }}>
             {!loading && children}
         </AuthContext.Provider>
     );

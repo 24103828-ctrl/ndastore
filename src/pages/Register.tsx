@@ -7,6 +7,7 @@ export function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -15,6 +16,13 @@ export function Register() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        
+        // Validate phone number
+        if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+            setError('Số điện thoại phải bao gồm đúng 10 chữ số.');
+            setLoading(false);
+            return;
+        }
 
         try {
             const { data, error: signUpError } = await supabase.auth.signUp({
@@ -23,6 +31,7 @@ export function Register() {
                 options: {
                     data: {
                         full_name: fullName,
+                        phone: phone,
                     },
                     // Redirect is mostly for email links, but good compatibility
                     emailRedirectTo: window.location.origin,
@@ -44,7 +53,8 @@ export function Register() {
                             id: data.user.id,
                             full_name: fullName,
                             username: email.split('@')[0],
-                            email: email // We hope this column is added by the user
+                            email: email,
+                            phone: phone
                         }
                     ]);
                     if (profileError) console.error('Error creating profile (Identity might be missing):', profileError);
@@ -109,6 +119,16 @@ export function Register() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 border-t-0 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                                     placeholder="Email"
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    type="tel"
+                                    required
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 border-t-0 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                                    placeholder="Số điện thoại (10 chữ số)"
                                 />
                             </div>
                             <div>

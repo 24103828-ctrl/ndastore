@@ -41,7 +41,7 @@ export function ProductDetail() {
     const { id } = useParams<{ id: string }>();
     const { addItem, isProcessing } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
-    const { user } = useAuth();
+    const { user, phone } = useAuth();
     const { t } = useLanguage();
     const { showToast } = useToast();
     const viewStartTime = useRef<number>(Date.now());
@@ -77,7 +77,8 @@ export function ProductDetail() {
                     (supabase.from('product_views' as any) as any).insert({
                         user_id: user.id,
                         product_id: currentProductId.current,
-                        duration_seconds: duration
+                        duration_seconds: duration,
+                        phone: phone
                     }).then(({ error }: any) => {
                         if (error) console.error('Tracking error:', error);
                     });
